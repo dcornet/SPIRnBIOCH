@@ -1,0 +1,431 @@
+{
+  "metadata": {
+    "version": "0.1.0",
+    "validFrom": "2026-01-01",
+    "currency": "EUR",
+    "taxMode": "HT",
+    "contractual": false
+  },
+  "instruments": {
+    "viavi_micronir": {
+      "label": "VIAVI MicroNIR",
+      "shortLabel": "MicroNIR",
+      "supportsFieldWork": false,
+      "portable": true,
+      "autonomousReservationUnit": "day",
+      "hoursPerDay": 7,
+      "prices": {
+        "self_service_hourly": {
+          "label": "Utilisation autonome",
+          "min": 15,
+          "max": 25,
+          "unit": "hour",
+          "pricingMode": "range"
+        },
+        "assisted_hourly": {
+          "label": "Utilisation accompagnée",
+          "min": 70,
+          "max": 100,
+          "unit": "hour",
+          "pricingMode": "range"
+        },
+        "initial_training": {
+          "label": "Formation initiale",
+          "min": 180,
+          "max": 280,
+          "unit": "forfait",
+          "pricingMode": "range"
+        },
+        "batch_setup": {
+          "label": "Mise en route d'un lot",
+          "min": 80,
+          "max": 120,
+          "unit": "forfait",
+          "pricingMode": "range"
+        },
+        "platform_sample_measure": {
+          "label": "Mesure réalisée par le plateau",
+          "min": 5,
+          "max": 12,
+          "unit": "sample",
+          "pricingMode": "range"
+        }
+      }
+    },
+    "bruker_tango": {
+      "label": "Bruker TANGO FT-NIR",
+      "shortLabel": "TANGO",
+      "supportsFieldWork": false,
+      "portable": false,
+      "autonomousReservationUnit": "hour",
+      "prices": {
+        "self_service_hourly": {
+          "label": "Utilisation autonome",
+          "min": 25,
+          "max": 40,
+          "unit": "hour",
+          "pricingMode": "range"
+        },
+        "assisted_hourly": {
+          "label": "Utilisation accompagnée",
+          "min": 85,
+          "max": 120,
+          "unit": "hour",
+          "pricingMode": "range"
+        },
+        "initial_training": {
+          "label": "Formation initiale",
+          "min": 250,
+          "max": 400,
+          "unit": "forfait",
+          "pricingMode": "range"
+        },
+        "batch_setup": {
+          "label": "Mise en route d'un lot",
+          "min": 100,
+          "max": 150,
+          "unit": "forfait",
+          "pricingMode": "range"
+        },
+        "platform_sample_measure": {
+          "label": "Mesure réalisée par le plateau",
+          "min": 8,
+          "max": 18,
+          "unit": "sample",
+          "pricingMode": "range"
+        }
+      }
+    },
+    "asd_labspec": {
+      "label": "ASD LabSpec",
+      "shortLabel": "LabSpec",
+      "supportsFieldWork": true,
+      "portable": true,
+      "autonomousReservationUnit": "day",
+      "hoursPerDay": 7,
+      "prices": {
+        "self_service_hourly": {
+          "label": "Utilisation autonome",
+          "min": 30,
+          "max": 50,
+          "unit": "hour",
+          "pricingMode": "range"
+        },
+        "assisted_hourly": {
+          "label": "Utilisation accompagnée",
+          "min": 100,
+          "max": 145,
+          "unit": "hour",
+          "pricingMode": "range"
+        },
+        "initial_training": {
+          "label": "Formation initiale",
+          "min": 350,
+          "max": 550,
+          "unit": "forfait",
+          "pricingMode": "range"
+        },
+        "batch_setup": {
+          "label": "Mise en route d'un lot",
+          "min": 120,
+          "max": 180,
+          "unit": "forfait",
+          "pricingMode": "range"
+        },
+        "platform_sample_measure": {
+          "label": "Mesure réalisée par le plateau",
+          "min": 10,
+          "max": 25,
+          "unit": "sample",
+          "pricingMode": "range"
+        },
+        "field_day_availability": {
+          "label": "Mise à disposition sur le terrain",
+          "min": 250,
+          "max": 450,
+          "unit": "day",
+          "pricingMode": "range"
+        }
+      }
+    },
+    "mir_perkin_elmer": {
+      "label": "MIR PerkinElmer FTIR",
+      "shortLabel": "PerkinElmer",
+      "supportsFieldWork": false,
+      "portable": false,
+      "autonomousReservationUnit": "hour",
+      "prices": {
+        "self_service_hourly": {
+          "label": "Utilisation autonome",
+          "min": 20,
+          "max": 35,
+          "unit": "hour",
+          "pricingMode": "range"
+        },
+        "assisted_hourly": {
+          "label": "Utilisation accompagnée",
+          "min": 80,
+          "max": 120,
+          "unit": "hour",
+          "pricingMode": "range"
+        },
+        "initial_training": {
+          "label": "Formation initiale",
+          "min": 250,
+          "max": 400,
+          "unit": "forfait",
+          "pricingMode": "range"
+        },
+        "batch_setup": {
+          "label": "Mise en route d'un lot",
+          "min": 100,
+          "max": 150,
+          "unit": "forfait",
+          "pricingMode": "range"
+        },
+        "platform_sample_measure": {
+          "label": "Mesure réalisée par le plateau",
+          "min": 25,
+          "max": 50,
+          "unit": "sample",
+          "pricingMode": "range"
+        }
+      }
+    }
+  },
+  "chemometrics": {
+    "feasibility_study": {
+      "label": "Étude de faisabilité chimiométrique",
+      "min": 600,
+      "max": 1600,
+      "unit": "study",
+      "pricingMode": "range"
+    },
+    "exploratory_model": {
+      "label": "Modèle exploratoire sur données préparées",
+      "min": 1200,
+      "max": 3500,
+      "unit": "model",
+      "pricingMode": "range"
+    },
+    "validated_calibration": {
+      "label": "Calibration validée standard",
+      "min": 3000,
+      "max": 8000,
+      "unit": "calibration",
+      "pricingMode": "range"
+    },
+    "local_model_validation": {
+      "label": "Validation locale d'un modèle",
+      "min": 800,
+      "max": 2800,
+      "unit": "validation",
+      "pricingMode": "range"
+    },
+    "bias_correction": {
+      "label": "Correction de biais",
+      "min": 400,
+      "max": 1400,
+      "unit": "model",
+      "pricingMode": "range"
+    },
+    "calibration_transfer": {
+      "label": "Transfert entre instruments",
+      "min": 1500,
+      "max": 5000,
+      "unit": "transfer",
+      "pricingMode": "range"
+    },
+    "annual_audit": {
+      "label": "Audit annuel",
+      "min": 500,
+      "max": 1700,
+      "unit": "model",
+      "pricingMode": "range"
+    },
+    "light_update": {
+      "label": "Mise à jour légère",
+      "min": 1000,
+      "max": 3000,
+      "unit": "update",
+      "pricingMode": "range"
+    },
+    "major_recalibration": {
+      "label": "Recalibration importante",
+      "min": 3000,
+      "max": 8500,
+      "unit": "recalibration",
+      "pricingMode": "range"
+    },
+    "complex_campaign": {
+      "label": "Campagne complète complexe",
+      "min": 6000,
+      "max": 18000,
+      "unit": "campaign",
+      "pricingMode": "range"
+    },
+    "prediction_batch_setup": {
+      "label": "Préparation d'un lot de prédictions",
+      "min": 60,
+      "max": 120,
+      "unit": "batch",
+      "pricingMode": "range"
+    },
+    "prediction_per_spectrum": {
+      "label": "Prédiction avec modèle existant",
+      "min": 1,
+      "max": 4,
+      "unit": "spectrum",
+      "pricingMode": "range"
+    },
+    "instrument_qualification": {
+      "label": "Étalonnage ou qualification instrumentale",
+      "pricingMode": "quote",
+      "labelForQuote": "Sur devis"
+    }
+  },
+  "options": {
+    "quality_control": {
+      "label": "Contrôle qualité du lot",
+      "min": 40,
+      "max": 80,
+      "unit": "forfait",
+      "pricingMode": "range"
+    },
+    "simple_interpretation": {
+      "label": "Interprétation simple",
+      "min": 40,
+      "max": 90,
+      "unit": "forfait",
+      "pricingMode": "range"
+    },
+    "scientific_interpretation_hourly": {
+      "label": "Interprétation scientifique",
+      "min": 90,
+      "max": 140,
+      "unit": "hour",
+      "pricingMode": "range"
+    },
+    "formal_report": {
+      "label": "Rapport formalisé",
+      "min": 100,
+      "max": 300,
+      "unit": "report",
+      "pricingMode": "range"
+    },
+    "special_preparation_hourly": {
+      "label": "Préparation particulière",
+      "min": 60,
+      "max": 100,
+      "unit": "hour",
+      "pricingMode": "range"
+    },
+    "urgent_markup": {
+      "label": "Majoration d'urgence",
+      "min": 0.25,
+      "max": 0.5,
+      "unit": "percent",
+      "pricingMode": "percent"
+    },
+    "training_extra_person": {
+      "label": "Supplément de formation par personne",
+      "min": 50,
+      "max": 100,
+      "unit": "person",
+      "pricingMode": "range"
+    },
+    "externalAdministrativeFee": {
+      "enabled": false,
+      "label": "Frais administratifs externes",
+      "min": 50,
+      "max": 100,
+      "unit": "forfait",
+      "pricingMode": "range"
+    },
+    "billing_minimum": {
+      "label": "Minimum de facturation",
+      "min": 80,
+      "max": 150,
+      "unit": "quote",
+      "pricingMode": "range"
+    },
+    "prediction_additional_model_per_spectrum": {
+      "label": "Modèle ou propriété supplémentaire appliquée",
+      "min": 0.5,
+      "max": 2,
+      "unit": "spectrum_model",
+      "pricingMode": "range"
+    },
+    "field_staff_hourly": {
+      "label": "Temps du personnel sur le terrain",
+      "min": 90,
+      "max": 140,
+      "unit": "hour",
+      "pricingMode": "range"
+    },
+    "travel_expenses": {
+      "pricingMode": "quote",
+      "label": "Déplacement",
+      "labelForQuote": "Sur devis"
+    },
+    "accommodation_expenses": {
+      "pricingMode": "quote",
+      "label": "Hébergement ou frais au réel",
+      "labelForQuote": "Non inclus"
+    }
+  },
+  "contexts": {
+    "occasional_help": {
+      "label": "Aide ponctuelle",
+      "description": "Prix au coût estimatif, sans marge commerciale.",
+      "costCoefficient": {
+        "min": 1,
+        "max": 1
+      },
+      "display": "prix au coût estimatif",
+      "mode": "direct"
+    },
+    "collaborative_project": {
+      "label": "Projet collaboratif",
+      "description": "Répartition indicative à définir dans la convention, le budget ou l'accord de collaboration.",
+      "billedShare": {
+        "min": 0.5,
+        "max": 1
+      },
+      "mode": "in_kind",
+      "notice": "Cette répartition est indicative. Elle doit être définie dans la convention, le budget ou l'accord de collaboration."
+    },
+    "subcontracting": {
+      "label": "Sous-traitance",
+      "description": "Majoration liée au délai, à la gestion contractuelle, aux livrables, à la traçabilité, à la confidentialité, à l'archivage et à la responsabilité du plateau.",
+      "costCoefficient": {
+        "min": 1.35,
+        "max": 1.7
+      },
+      "mode": "markup"
+    }
+  },
+  "calculation": {
+    "extraRepetitionMultiplier": {
+      "min": 0.4,
+      "max": 0.6
+    },
+    "defaultPreparationHours": 1,
+    "defaultScientificInterpretationHours": 1,
+    "maxQuantity": 100000
+  },
+  "rounding": {
+    "precision": 1,
+    "mode": "nearest"
+  },
+  "disclaimers": [
+    "Tarifs indicatifs, hors taxes et non contractuels.",
+    "TVA éventuelle en supplément.",
+    "Analyses de référence non incluses sauf mention contraire.",
+    "Préparation complexe des échantillons non incluse.",
+    "Déplacement et hébergement non inclus sauf mention contraire.",
+    "Délai à confirmer.",
+    "Validité du modèle limitée au domaine de calibration.",
+    "Devis final établi après revue scientifique et technique."
+  ]
+}

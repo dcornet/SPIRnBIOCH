@@ -1,0 +1,1073 @@
+{
+  "requestTypes": {
+    "spectra_acquisition": {
+      "label": "Prise de spectres",
+      "definition": "Mesures NIRS/SPIR ou MIR avec un instrument du plateau.",
+      "example": "Exemple : réserver un MicroNIR ou envoyer un lot d'échantillons.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "serviceMode",
+          "step": 2,
+          "type": "radio",
+          "label": "Mode de réalisation",
+          "default": "self_service",
+          "options": [
+            {
+              "value": "self_service",
+              "label": "Utilisation autonome nominative"
+            },
+            {
+              "value": "assisted",
+              "label": "Utilisation accompagnée"
+            },
+            {
+              "value": "full_service",
+              "label": "Prestation complète par le plateau"
+            }
+          ],
+          "section": "instrument_mode"
+        },
+        {
+          "id": "instrument",
+          "step": 2,
+          "type": "select",
+          "label": "Spectromêtre",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "measurementLocation",
+          "step": 2,
+          "type": "radio",
+          "label": "Lieu de réalisation pour ASD LabSpec",
+          "default": "platform",
+          "visibleWhen": {
+            "field": "instrument",
+            "equals": "asd_labspec"
+          },
+          "options": [
+            {
+              "value": "platform",
+              "label": "Sur le plateau"
+            },
+            {
+              "value": "field",
+              "label": "Sur le terrain"
+            }
+          ],
+          "section": "instrument_mode"
+        },
+        {
+          "id": "hours",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'heures réservées",
+          "min": 0.5,
+          "max": 200,
+          "stepValue": 0.5,
+          "default": 2,
+          "visibleWhen": {
+            "any": [
+              {
+                "field": "serviceMode",
+                "equals": "assisted"
+              },
+              {
+                "all": [
+                  {
+                    "field": "serviceMode",
+                    "equals": "self_service"
+                  },
+                  {
+                    "field": "instrument",
+                    "in": [
+                      "bruker_tango",
+                      "mir_perkin_elmer"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "section": "volume"
+        },
+        {
+          "id": "reservedDays",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de journées réservées",
+          "min": 1,
+          "max": 30,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "visibleWhen": {
+            "all": [
+              {
+                "field": "serviceMode",
+                "equals": "self_service"
+              },
+              {
+                "field": "instrument",
+                "in": [
+                  "viavi_micronir",
+                  "asd_labspec"
+                ]
+              }
+            ]
+          },
+          "section": "volume"
+        },
+        {
+          "id": "samples",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'échantillons",
+          "min": 1,
+          "max": 10000,
+          "stepValue": 1,
+          "default": 20,
+          "integer": true,
+          "visibleWhen": {
+            "field": "serviceMode",
+            "equals": "full_service"
+          },
+          "section": "volume"
+        },
+        {
+          "id": "replicates",
+          "step": 2,
+          "type": "number",
+          "label": "Répétitions par échantillon",
+          "min": 1,
+          "max": 20,
+          "stepValue": 1,
+          "default": 1,
+          "integer": true,
+          "visibleWhen": {
+            "field": "serviceMode",
+            "equals": "full_service"
+          },
+          "section": "volume"
+        },
+        {
+          "id": "sampleReady",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Échantillons prêts à mesurer",
+          "default": true,
+          "visibleWhen": {
+            "field": "serviceMode",
+            "equals": "full_service"
+          },
+          "section": "available_data"
+        },
+        {
+          "id": "preparationHours",
+          "step": 2,
+          "type": "number",
+          "label": "Heures de préparation particulière",
+          "min": 0,
+          "max": 100,
+          "stepValue": 0.5,
+          "default": 0,
+          "visibleWhen": {
+            "field": "serviceMode",
+            "in": [
+              "assisted",
+              "full_service"
+            ]
+          },
+          "section": "options"
+        },
+        {
+          "id": "simpleInterpretation",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Interprétation simple",
+          "default": false,
+          "visibleWhen": {
+            "field": "serviceMode",
+            "in": [
+              "assisted",
+              "full_service"
+            ]
+          },
+          "section": "options"
+        },
+        {
+          "id": "scientificInterpretationHours",
+          "step": 2,
+          "type": "number",
+          "label": "Heures d'interprétation scientifique",
+          "min": 0,
+          "max": 100,
+          "stepValue": 0.5,
+          "default": 0,
+          "visibleWhen": {
+            "field": "serviceMode",
+            "in": [
+              "assisted",
+              "full_service"
+            ]
+          },
+          "section": "options"
+        },
+        {
+          "id": "formalReport",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Rapport formalisé",
+          "default": false,
+          "visibleWhen": {
+            "field": "serviceMode",
+            "equals": "full_service"
+          },
+          "section": "options"
+        },
+        {
+          "id": "fieldDays",
+          "step": 2,
+          "type": "number",
+          "label": "Jours de mise à disposition terrain",
+          "min": 1,
+          "max": 30,
+          "stepValue": 1,
+          "default": 1,
+          "integer": true,
+          "visibleWhen": {
+            "all": [
+              {
+                "field": "instrument",
+                "equals": "asd_labspec"
+              },
+              {
+                "field": "measurementLocation",
+                "equals": "field"
+              }
+            ]
+          },
+          "section": "volume"
+        },
+        {
+          "id": "fieldStaffHours",
+          "step": 2,
+          "type": "number",
+          "label": "Temps personnel terrain",
+          "min": 0,
+          "max": 200,
+          "stepValue": 0.5,
+          "default": 0,
+          "visibleWhen": {
+            "all": [
+              {
+                "field": "instrument",
+                "equals": "asd_labspec"
+              },
+              {
+                "field": "measurementLocation",
+                "equals": "field"
+              }
+            ]
+          },
+          "section": "volume"
+        }
+      ],
+      "groupId": "measure",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Mesurer des échantillons par NIRS/SPIR ou MIR."
+    },
+    "initial_training": {
+      "label": "Formation initiale",
+      "definition": "Habilitation nominative à l'utilisation d'un instrument.",
+      "example": "Exemple : former deux personnes au Bruker TANGO.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "instrument",
+          "step": 2,
+          "type": "select",
+          "label": "Spectromêtre",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "people",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de personnes",
+          "min": 1,
+          "max": 20,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "trainingFormat",
+          "step": 2,
+          "type": "radio",
+          "label": "Format",
+          "default": "individual",
+          "options": [
+            {
+              "value": "individual",
+              "label": "Individuel"
+            },
+            {
+              "value": "small_group",
+              "label": "Petit groupe"
+            }
+          ],
+          "section": "options"
+        }
+      ],
+      "groupId": "training",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Former et habiliter une ou plusieurs personnes."
+    },
+    "feasibility_study": {
+      "label": "Étude de faisabilité chimiométrique",
+      "definition": "Examen initial des spectres, références et variabilité des échantillons.",
+      "example": "Exemple : vérifier si une propriété peut être modélisée.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "properties",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de propriétés  à étudier",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "matrices",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de matrices ou familles",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "spectraAvailable",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Spectres déjà disponibles",
+          "default": true,
+          "section": "available_data"
+        },
+        {
+          "id": "referenceValuesAvailable",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Valeurs de référence déjà disponibles",
+          "default": true,
+          "section": "available_data"
+        },
+        {
+          "id": "samples",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre approximatif d'échantillons",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 50,
+          "section": "volume"
+        }
+      ],
+      "groupId": "develop_model",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Vérifier si un modèle peut raisonnablement être construit."
+    },
+    "exploratory_model": {
+      "label": "Modèle exploratoire",
+      "definition": "Première modélisation pour explorer les performances possibles.",
+      "example": "Exemple : construire un modèle PLS préliminaire sur données déjà triées.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "properties",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de propriétés",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "matrices",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de matrices",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "cleanData",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Données nettoyées et structurées",
+          "default": true,
+          "section": "available_data"
+        },
+        {
+          "id": "methodReport",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Rapport méthodologique souhaité",
+          "default": false,
+          "section": "options"
+        }
+      ],
+      "groupId": "develop_model",
+      "order": 2,
+      "allowMultiple": true,
+      "shortDescription": "Explorer les performances possibles sur données préparées."
+    },
+    "validated_calibration": {
+      "label": "Calibration validée",
+      "definition": "Construction et validation d'un modèle de prédiction exploitable.",
+      "example": "Exemple : calibrer une propriété de référence sur 180 échantillons.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "properties",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de propriétés  à prédire",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "matrices",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de matrices",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "samples",
+          "step": 2,
+          "type": "number",
+          "label": "Échantillons disponibles",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 120,
+          "section": "volume"
+        },
+        {
+          "id": "referenceAnalysesExist",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Analyses de référence existantes",
+          "default": true,
+          "section": "available_data"
+        },
+        {
+          "id": "independentValidation",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Validation indépendante demandée",
+          "default": false,
+          "section": "options"
+        },
+        {
+          "id": "multiInstrumentModel",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Modèle partagé par plusieurs instruments",
+          "default": false,
+          "section": "options"
+        },
+        {
+          "id": "formalReport",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Rapport complet demandé",
+          "default": true,
+          "section": "options"
+        }
+      ],
+      "groupId": "develop_model",
+      "order": 3,
+      "allowMultiple": true,
+      "shortDescription": "Construire et valider un modèle de prédiction."
+    },
+    "local_model_validation": {
+      "label": "Validation locale d'un modèle existant",
+      "definition": "Vérification d'un modèle sur des instruments ou échantillons locaux.",
+      "example": "Exemple : valider un modèle sur 40 échantillons de contrôle.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de modèles",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "instrumentsCount",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'instruments",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "validationSamples",
+          "step": 2,
+          "type": "number",
+          "label": "Échantillons de validation",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 30,
+          "section": "volume"
+        },
+        {
+          "id": "referenceResultsAvailable",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Résultats de référence disponibles",
+          "default": true,
+          "section": "available_data"
+        },
+        {
+          "id": "biasCorrectionPossible",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Correction de biais potentiellement nécessaire",
+          "default": false,
+          "section": "options"
+        }
+      ],
+      "groupId": "use_model",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Vérifier localement un modèle existant."
+    },
+    "bias_correction": {
+      "label": "Correction de biais ou ajustement saisonnier",
+      "definition": "Ajustement limité quand les prédictions présentent un décalage systématique.",
+      "example": "Exemple : corriger un modèle après une nouvelle saison.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de modèles",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "instrumentsCount",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'instruments",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "controlSamples",
+          "step": 2,
+          "type": "number",
+          "label": "Échantillons de contrôle",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 20,
+          "section": "volume"
+        },
+        {
+          "id": "interventionReason",
+          "step": 2,
+          "type": "select",
+          "label": "Motif de l'intervention",
+          "default": "new_campaign",
+          "options": [
+            {
+              "value": "new_campaign",
+              "label": "Nouvelle campagne"
+            },
+            {
+              "value": "new_season",
+              "label": "Nouvelle saison"
+            },
+            {
+              "value": "new_instrument",
+              "label": "Nouvel instrument"
+            }
+          ],
+          "section": "options"
+        }
+      ],
+      "groupId": "use_model",
+      "order": 2,
+      "allowMultiple": true,
+      "shortDescription": "Corriger un décalage systématique limité."
+    },
+    "calibration_transfer": {
+      "label": "Transfert de calibration entre instruments",
+      "definition": "Adaptation ou vérification d'un modèle pour un autre instrument.",
+      "example": "Exemple : transférer un modèle d'un TANGO vers un autre instrument.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "sourceInstrument",
+          "step": 2,
+          "type": "select",
+          "label": "Instrument source",
+          "source": "instruments",
+          "default": "bruker_tango",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "targetInstrument",
+          "step": 2,
+          "type": "select",
+          "label": "Instrument cible",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de modèles",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "transferSamples",
+          "step": 2,
+          "type": "number",
+          "label": "Échantillons de transfert",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 30,
+          "section": "volume"
+        },
+        {
+          "id": "instrumentSimilarity",
+          "step": 2,
+          "type": "radio",
+          "label": "Similarité des instruments",
+          "default": "same_model",
+          "options": [
+            {
+              "value": "same_model",
+              "label": "Même modèle"
+            },
+            {
+              "value": "different_technology",
+              "label": "Technologies différentes"
+            }
+          ],
+          "section": "options"
+        }
+      ],
+      "groupId": "use_model",
+      "order": 3,
+      "allowMultiple": true,
+      "shortDescription": "Adapter ou vérifier un modèle sur un autre instrument."
+    },
+    "existing_model_predictions": {
+      "label": "Prédictions avec un modèle existant",
+      "definition": "Application d'un modèle existant à de nouveaux spectres.",
+      "example": "Exemple : prédire deux propriétés sur 500 spectres.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "instrument",
+          "step": 2,
+          "type": "select",
+          "label": "Spectromêtre",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "spectra",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de spectres",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 100,
+          "section": "volume"
+        },
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de modèles ou propriétés",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "spectraAlreadyAcquired",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Spectres déjà acquis",
+          "default": true,
+          "section": "available_data"
+        },
+        {
+          "id": "outlierCheck",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Contrôle des valeurs aberrantes",
+          "default": false,
+          "section": "options"
+        },
+        {
+          "id": "formalReport",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Rapport souhaité",
+          "default": false,
+          "section": "options"
+        }
+      ],
+      "groupId": "use_model",
+      "order": 4,
+      "allowMultiple": true,
+      "shortDescription": "Appliquer un modèle existant à de nouveaux spectres."
+    },
+    "model_maintenance": {
+      "label": "Maintenance d'un modèle",
+      "definition": "Contrôle périodique et mises à jour lorsque le domaine d'application évolue.",
+      "example": "Exemple : audit annuel avec ajout limité de nouveaux échantillons.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "maintenanceType",
+          "step": 2,
+          "type": "select",
+          "label": "Type de maintenance",
+          "default": "annual_audit",
+          "options": [
+            {
+              "value": "annual_audit",
+              "label": "Audit annuel"
+            },
+            {
+              "value": "limited_new_samples",
+              "label": "Ajout limité de nouveaux échantillons"
+            },
+            {
+              "value": "bias_correction",
+              "label": "Correction de biais"
+            },
+            {
+              "value": "light_update",
+              "label": "Mise à jour légère"
+            },
+            {
+              "value": "major_recalibration",
+              "label": "Recalibration importante"
+            }
+          ],
+          "section": "instrument_mode"
+        },
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de modèles",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "properties",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de propriétés",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "newSamples",
+          "step": 2,
+          "type": "number",
+          "label": "Nouveaux échantillons",
+          "min": 0,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 0,
+          "section": "volume"
+        },
+        {
+          "id": "frequency",
+          "step": 2,
+          "type": "select",
+          "label": "Fréquence souhaitée",
+          "default": "annual",
+          "options": [
+            {
+              "value": "annual",
+              "label": "Annuelle"
+            },
+            {
+              "value": "seasonal",
+              "label": "Saisonnière"
+            },
+            {
+              "value": "on_demand",
+              "label": "À la demande"
+            }
+          ],
+          "section": "options"
+        },
+        {
+          "id": "comparativeReport",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Rapport comparatif demande",
+          "default": false,
+          "section": "options"
+        }
+      ],
+      "groupId": "maintain",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Contrôler ou mettre à jour un modèle dans le temps."
+    },
+    "instrument_qualification": {
+      "label": "Étalonnage ou qualification instrumentale",
+      "definition": "Vérification du fonctionnement de l'instrument, distincte de la calibration chimiométrique.",
+      "example": "Exemple : qualification d'un spectromètre avant campagne.",
+      "pricingHint": "Sur devis possible",
+      "fields": [
+        {
+          "id": "instrument",
+          "step": 2,
+          "type": "select",
+          "label": "Spectromêtre",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "instrumentsCount",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'instruments",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "qualificationType",
+          "step": 2,
+          "type": "select",
+          "label": "Type d'intervention",
+          "default": "qualification",
+          "options": [
+            {
+              "value": "qualification",
+              "label": "Qualification"
+            },
+            {
+              "value": "metrological_check",
+              "label": "Vérification métrologique"
+            },
+            {
+              "value": "adjustment",
+              "label": "Ajustement"
+            }
+          ],
+          "section": "options"
+        },
+        {
+          "id": "interventionLocation",
+          "step": 2,
+          "type": "radio",
+          "label": "Lieu d'intervention",
+          "default": "platform",
+          "options": [
+            {
+              "value": "platform",
+              "label": "Sur le plateau"
+            },
+            {
+              "value": "field",
+              "label": "Sur site"
+            }
+          ],
+          "section": "options"
+        },
+        {
+          "id": "formalReport",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Certificat ou rapport formalisé",
+          "default": true,
+          "section": "options"
+        }
+      ],
+      "groupId": "maintain",
+      "order": 2,
+      "allowMultiple": true,
+      "shortDescription": "Vérifier le fonctionnement instrumental, souvent sur devis."
+    }
+  },
+  "commonFields": [
+    {
+      "id": "urgent",
+      "step": 3,
+      "type": "checkbox",
+      "label": "Demande urgente",
+      "default": false,
+      "section": "context"
+    },
+    {
+      "id": "context",
+      "step": 3,
+      "type": "radio",
+      "label": "Contexte d'intervention",
+      "source": "contexts",
+      "default": "occasional_help",
+      "section": "context"
+    }
+  ],
+  "requestGroups": [
+    {
+      "id": "measure",
+      "label": "Mesurer des échantillons",
+      "description": "Acquisition de spectres sur le plateau ou sur le terrain.",
+      "order": 1,
+      "orientation": "je veux mesurer mes échantillons"
+    },
+    {
+      "id": "training",
+      "label": "Devenir autonome",
+      "description": "Formation et habilitation à l'utilisation d'un instrument.",
+      "order": 2,
+      "orientation": "je veux apprendre à utiliser un instrument"
+    },
+    {
+      "id": "develop_model",
+      "label": "Développer un modèle",
+      "description": "Faisabilité, exploration et calibration validée.",
+      "order": 3,
+      "orientation": "je veux créer un modèle de prédiction"
+    },
+    {
+      "id": "use_model",
+      "label": "Utiliser ou adapter un modèle",
+      "description": "Prédictions, validation, transfert et correction de biais.",
+      "order": 4,
+      "orientation": "je possède déjà un modèle"
+    },
+    {
+      "id": "maintain",
+      "label": "Maintenir un modèle ou un instrument",
+      "description": "Maintenance chimiométrique et qualification instrumentale.",
+      "order": 5,
+      "orientation": "je possède déjà un modèle"
+    }
+  ],
+  "fieldSections": {
+    "instrument_mode": {
+      "label": "Instrument et mode",
+      "description": "Choix du spectromètre, du mode de réalisation et du lieu."
+    },
+    "volume": {
+      "label": "Volume",
+      "description": "Quantités, durée, journées réservées, échantillons, modèles ou propriétés."
+    },
+    "available_data": {
+      "label": "Données disponibles",
+      "description": "Spectres, résultats de référence et structuration des données."
+    },
+    "options": {
+      "label": "Options",
+      "description": "Interprétation, préparation, rapport et contrôles complémentaires."
+    },
+    "context": {
+      "label": "Contexte",
+      "description": "Options globales appliquées au pré-devis complet."
+    }
+  }
+}

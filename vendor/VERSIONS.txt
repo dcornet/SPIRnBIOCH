@@ -1,0 +1,5 @@
+Versions locales utilisees pour l'export navigateur :
+- jsPDF 2.5.1
+- fflate 0.8.2
+
+Ces fichiers sont charges localement depuis vendor/ ; aucun CDN n'est utilise a l'execution.

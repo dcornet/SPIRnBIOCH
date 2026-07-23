@@ -1,0 +1,24 @@
+# Consignes pour agents de maintenance
+
+- Ne jamais coder un tarif, coefficient, libellé tarifaire ou paramêtre modifiable directement dans JavaScript ou HTML.
+- Préserver le schéma de `data/tarifs.json`, notamment `metadata`, `instruments`, `chemometrics`, `options`, `contexts`, `rounding` et `disclaimers`.
+- Utiliser des identifiants techniques stables, sans accents ni espaces.
+- Ajouter des tests pour chaque nouvelle règle tarifaire ou changement de comportement.
+- Maintenir la séparation entre données, calculs, interface, styles et tests.
+- Conserver `assets/js/calculator.js` comme moteur pur sans accès au DOM, sans `fetch()` et sans effet de bord.
+- Maintenir l'accèssibilite : labels associés, fieldsets, navigation clavier, focus visible, titres hiérarchisés et messages d'erreur proches des champs.
+- Ne jamais envoyer de données utilisateur à un serveur.
+- Ne pas introduire de backend, de base de données, de service distant, de clé API ou de dépendance externe sans décision explicite.
+- Distinguer dans le rendu la valeur technique complète, le montant estimatif facturé et la contribution scientifique en nature.
+- Ne jamais additionner la contribution en nature au montant facturé.
+- Mettre à jour `metadata.version` dans `data/tarifs.json` lors d'un changement tarifaire.
+- Vérifier `node --test` avant de livrer une modification du moteur.
+- Conserver les chemins relatifs pour rester compatible GitHub Pages.
+- Ne jamais réintroduire de dépendance obligatoire a `fetch()` pour charger la configuration indispensable.
+- Ne jamais réintroduire d'import ES dans les scripts directement utilisés par `index.html`, sauf si un vrai processus de génération autonome est mis en place.
+- `assets/js/generated-config.js` est généré automatiquement depuis les JSON et les logos de `data/`.
+- Toute modification d'un JSON ou d'un logo doit être suivie de `python tools/generate-runtime-config.py`.
+- Une demande utilisateur est représentee par un tableau de prestations `items`.
+- Les règles de contexte s'appliquent au total global, sauf règle explicitement documentée.
+- Toute nouvelle règle multiprestation doit avoir un test.
+- Préserver le focus et éviter les rendus complets pendant la saisie, surtout sur les champs numériques.

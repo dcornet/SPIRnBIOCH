@@ -1,108 +1,184 @@
-# biochNspir_spir_devis
+# Pré-devis NIRS / SPIR
 
-## Présentation
+Application statique locale pour composer un pré-devis indicatif NIRS/SPIR avec plusieurs prestations dans une même demande.
 
-`biochNspir_spir_devis` est une application web statique développée à titre expérimental pour les besoins internes de l’UMR AGAP et de son plateau d’analyse NIRS/SPIR.
+Les montants sont indicatifs, hors taxes et non contractuels. Le devis final reste établi après revue scientifique et technique par le plateau.
 
-L’application permet aux utilisateurs de décrire une demande, de sélectionner plusieurs prestations et d’obtenir une estimation indicative de leur coût. Elle couvre notamment :
+## Lancement utilisateur
 
-* l’acquisition de spectres ;
-* l’utilisation autonome ou accompagnée des instruments ;
-* la formation initiale nominative ;
-* les études de faisabilité chimiométrique ;
-* le développement et la validation de calibrations ;
-* les prédictions avec un modèle existant ;
-* les transferts de calibration ;
-* les corrections de biais ;
-* la maintenance des modèles ;
-* la qualification instrumentale.
+Double-cliquer sur `index.html`.
 
-Les instruments actuellement pris en compte sont :
+L'application fonctionne sans serveur HTTP, sans backend et sans envoi de données. Les JSON restent les sources de vérité, mais ils sont regroupés dans `assets/js/generated-config.js` pour permettre l'ouverture directe en `file://`.
 
-* VIAVI MicroNIR ;
-* Bruker TANGO FT-NIR ;
-* ASD LabSpec ;
-* MIR PerkinElmer FTIR.
+## Lancement développement
 
-## Statut du projet
+Un serveur local reste utile pour tester le comportement HTTP et GitHub Pages :
 
-Cette application est un **prototype interne expérimental**.
+```powershell
+python -m http.server 8000 --bind 127.0.0.1
+```
 
-Elle est destinée :
+Puis ouvrir :
 
-* aux personnels de l’UMR AGAP et du CIRAD ;
-* aux membres du plateau ;
-* aux partenaires expressément autorisés dans le cadre d’un projet ou d’une collaboration.
+```text
+http://127.0.0.1:8000/
+```
 
-Elle n’est pas destinée à constituer un service commercial public.
+## Génération de la configuration
 
-Les montants produits par l’application :
+Après toute modification dans `data/`, relancer :
 
-* sont indicatifs ;
-* sont exprimés hors taxes sauf mention contraire ;
-* ne constituent pas un devis contractuel ;
-* doivent être confirmés après analyse scientifique, technique, administrative et contractuelle de la demande ;
-* peuvent évoluer avec la grille tarifaire, les moyens disponibles, la nature des échantillons, les données de référence et les délais demandés.
+```powershell
+python tools/generate-runtime-config.py
+```
 
-Seuls les devis, conventions ou documents contractuels validés par les personnes habilitées engagent les institutions concernées.
+Vérifier la synchronisation sans modifier les fichiers :
 
-## Fonctionnement
+```powershell
+python tools/generate-runtime-config.py --check
+```
 
-L’application est développée en HTML, CSS, JavaScript et JSON.
+Le fichier `assets/js/generated-config.js` est généré automatiquement. Ne pas le modifier à la main.
 
-Elle fonctionne :
+Le générateur lit :
 
-* directement depuis `index.html` ;
-* avec un serveur HTTP local ;
-* sous la forme d’un site statique compatible avec GitHub Pages.
+- `data/tarifs.json`
+- `data/prestations.json`
+- `data/textes.json`
+- les logos placés dans `data/`
 
-Elle ne nécessite actuellement :
+Les logos sont intégrés sous forme de data URL pour fonctionner en double-clic et dans le PDF A4.
 
-* aucun serveur applicatif ;
-* aucune base de données ;
-* aucun compte utilisateur ;
-* aucune clé API ;
-* aucune transmission automatique des demandes.
+## Fonctionnement multiprestations
 
-Les brouillons sont enregistrés localement dans le navigateur de l’utilisateur. Les exports JSON et PDF sont générés sur son appareil.
+L'état d'une demande est structuré autour d'un tableau `items` :
 
-## Limites scientifiques
+```json
+{
+  "quoteId": "identifiant-local",
+  "requester": {
+    "firstName": "",
+    "lastName": "",
+    "email": "",
+    "organization": "",
+    "unit": ""
+  },
+  "project": {
+    "title": "",
+    "reference": "",
+    "plannedStartDate": "",
+    "plannedEndDate": "",
+    "phone": "",
+    "comment": ""
+  },
+  "context": "occasional_help",
+  "urgent": false,
+  "items": [
+    {
+      "id": "item-unique",
+      "requestType": "spectra_acquisition",
+      "answers": {},
+      "completed": false
+    }
+  ]
+}
+```
 
-Le plateau met en œuvre les instruments, compétences, logiciels et méthodes jugés adaptés à la demande, dans les limites définies par le devis ou la convention applicable.
+L'utilisateur peut ajouter plusieurs prestations, ajouter deux fois le même type, configurer chaque ligne, dupliquer, supprimer et obtenir un total global.
 
-Les prestations scientifiques et chimiométriques relèvent d’une **obligation de moyens et non d’une obligation générale de résultat**.
+## Règles de calcul
 
-En particulier, l’application ne peut garantir :
+- Chaque prestation est calculée séparément.
+- Les résultats chiffrables sont additionnés.
+- Les lignes `sur devis` restent visibles sans annuler les autres lignes.
+- Le contexte s'applique une seule fois au total global.
+- La collaboration affiche valeur technique complète, montant facturé estimatif et contribution scientifique en nature.
+- La contribution en nature est une différence, jamais une charge ajoutée.
+- La sous-traitance applique son coefficient une seule fois au total.
+- L'urgence est appliquée une seule fois au total calculable.
+- Le minimum de facturation administratif global est appliqué une seule fois au pré-devis agrégé. Un minimum propre à un lot doit être modélisé explicitement dans la prestation concernée.
+- Les instruments portables en utilisation autonome sont réservés à la journée, avec un tarif dérivé du tarif horaire et de `hoursPerDay`.
+- La formation autonome est nominative : elle est ajoutée uniquement pour les utilisateurs non formés ou au statut inconnu, puis dédupliquée par utilisateur et par instrument.
 
-* qu’une étude de faisabilité conclura favorablement ;
-* qu’une calibration pourra être développée ;
-* qu’un modèle atteindra un niveau de performance déterminé ;
-* qu’un transfert entre instruments sera possible sans recalibration ;
-* qu’un modèle existant restera applicable à de nouvelles matrices, saisons ou conditions de mesure.
+## Sauvegarde locale
 
-La performance d’une calibration dépend notamment :
+Un brouillon est sauvegardé automatiquement dans `localStorage`. Au redémarrage, l'utilisateur peut reprendre le brouillon ou recommencer.
 
-* de la qualité et de la représentativité des échantillons ;
-* de la qualité des analyses de référence ;
-* de la variabilité de la matrice ;
-* du nombre d’échantillons ;
-* du domaine couvert par la calibration ;
-* des conditions instrumentales et expérimentales.
+Aucune donnée nominative sensible ne doit être stockée : prénom, nom, courriel, téléphone, référence projet, commentaire libre et noms des utilisateurs ou participants sont exclus du brouillon automatique.
 
-## Confidentialité
+## PDF A4
 
-Aucune donnée confidentielle, sensible ou réglementée ne doit être saisie dans l’application sans dispositif institutionnel approprié.
+Le bouton `Générer le PDF A4` utilise la bibliothèque locale `vendor/jspdf.umd.min.js`, reprise comme dépendance vendue localement. Aucune ressource distante n'est appelée.
 
-Toute future fonctionnalité de transmission ou de stockage centralisé devra faire l’objet d’une validation préalable portant notamment sur :
+L'impression navigateur reste disponible avec `Imprimer / enregistrer en PDF`.
 
-* la sécurité ;
-* la protection des données ;
-* la confidentialité ;
-* les responsabilités institutionnelles ;
-* les durées de conservation.
+## Structure
 
-## Licence
+```text
+index.html
+404.html
+assets/css/
+assets/js/
+assets/images/parcours-predevis.svg
+data/
+tests/calculator.test.mjs
+tools/generate-runtime-config.py
+vendor/jspdf.umd.min.js
+```
 
-Le projet est diffusé sous une licence d’usage interne et expérimental.
+## Modifier les tarifs
 
-Il ne s’agit pas d’une licence open source. La publication, la redistribution, l’exploitation commerciale ou la mise à disposition publique nécessitent une autorisation écrite préalable du titulaire des droits.
+Modifier uniquement `data/tarifs.json`, puis relancer :
+
+```powershell
+python tools/generate-runtime-config.py
+```
+
+Mettre à jour `metadata.version` lors d'un changement de grille.
+
+## Ajouter une catégorie
+
+Ajouter une entrée dans `data/prestations.json`, clé `requestGroups`, avec `id`, `label`, `description` et `order`. Associer ensuite les prestations avec `groupId`.
+
+## Ajouter une prestation
+
+1. Ajouter la prestation dans `data/prestations.json`.
+2. Déclarer `groupId`, `order`, `allowMultiple`, `shortDescription` et ses champs.
+3. Ajouter les tarifs nécessaires dans `data/tarifs.json`.
+4. Ajouter la règle dans `assets/js/calculator.js`.
+5. Ajouter des tests.
+6. Régénérer `generated-config.js`.
+
+## Tests
+
+Avec Node.js installé :
+
+```powershell
+node --test
+```
+
+ou :
+
+```powershell
+npm test
+```
+
+Sans Node, vérifier au minimum :
+
+```powershell
+python tools/generate-runtime-config.py --check
+python -m http.server 8000 --bind 127.0.0.1
+```
+
+Puis tester `index.html` en double-clic et `http://127.0.0.1:8000/`.
+
+## GitHub Pages
+
+Le projet reste compatible avec GitHub Pages :
+
+- chemins relatifs ;
+- pas de backend ;
+- pas de routeur historique ;
+- `.nojekyll` présent ;
+- publication future depuis la branche principale et la racine du dépôt.
+

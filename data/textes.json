@@ -1,0 +1,48 @@
+{
+  "app": {
+    "title": "Pré-devis NIRS / SPIR",
+    "subtitle": "Estimez le coût de votre demande avant échange avec le plateau.",
+    "notice": "Cette estimation est indicative, hors taxes et non contractuelle. Un devis définitif sera établi après examen des échantillons, des objectifs et des données disponibles.",
+    "contactEmail": ""
+  },
+  "steps": [
+    "Votre demande",
+    "Instrument et mode",
+    "Volume et options",
+    "Contexte",
+    "Pré-devis"
+  ],
+  "educational": {
+    "chemometric_calibration": {
+      "title": "Calibration chimiométrique",
+      "text": "Construction d'un modèle reliant les spectres à des valeurs obtenues par une méthode de référence."
+    },
+    "validation": {
+      "title": "Validation",
+      "text": "Vérification des performances du modèle sur des échantillons qui n'ont pas servi directement à sa construction."
+    },
+    "prediction": {
+      "title": "Prédiction",
+      "text": "Application d'un modèle existant à de nouveaux spectres. La validité dépend du domaine couvert par la calibration."
+    },
+    "maintenance": {
+      "title": "Maintenance",
+      "text": "Contrôle périodique du modèle et mise à jour lorsque les produits, saisons, instruments ou conditions de mesure évoluent."
+    },
+    "bias_correction": {
+      "title": "Correction de biais",
+      "text": "Ajustement limité d'un modèle existant lorsque les prédictions présentent un décalage systématique."
+    },
+    "calibration_transfer": {
+      "title": "Transfert de calibration",
+      "text": "Adaptation ou vérification d'un modèle afin qu'il puisse être utilisé sur un autre instrument."
+    },
+    "instrument_qualification": {
+      "title": "Étalonnage instrumental",
+      "text": "Vérification ou ajustement métrologique de l'instrument. Cette opération est différente de la calibration chimiométrique."
+    }
+  },
+  "result": {
+    "nextStep": "Transmettre ces éléments au plateau pour confirmer le perimêtre scientifique, les échantillons, les données disponibles et le délai."
+  }
+}
