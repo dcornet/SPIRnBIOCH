@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title desc">
+  <title>Entretenir</title>
+  <desc>Icône représentant le contrôle, la correction et la mise à jour d’un modèle.</desc>
+  <circle cx="25" cy="31" r="8"/>
+<path d="M25 16v5M25 41v5M10 31h5M35 31h5"/>
+<path d="M14 20l4 4M32 38l4 4M36 20l-4 4M18 38l-4 4"/>
+<path d="M42 17h12v12"/>
+<path d="M54 17L39 32"/>
+<path d="M41 45h14M41 50h10"/>
+<circle cx="48" cy="39" r="3"/>
+</svg>

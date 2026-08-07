@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "scripts": {
+    "build:public": "powershell -ExecutionPolicy Bypass -File tools/build-public.ps1",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "exceljs": "^4.4.0"
+  }
+}

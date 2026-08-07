@@ -1,0 +1,96 @@
+{
+  "schema_version": "2.2",
+  "methode": "Extraction directe des icônes choisies, suppression propre du fond par matting, conversion en niveaux de gris.",
+  "normalisation": {
+    "canevas": "512 × 512 px",
+    "fond": "transparent",
+    "couleur": "niveaux de gris",
+    "nettoyage": "suppression du fond pastel / blanc avec réduction des halos et des pixels résiduels",
+    "svg": "SVG 512 × 512 contenant le PNG nettoyé en base64 pour conserver exactement l'icône choisie"
+  },
+  "vignettes": [
+    {
+      "id": "calibrer",
+      "titre": "Calibrer",
+      "sstitre": "Développer un modèle",
+      "description": "Construire et valider un modèle reliant les spectres à une ou plusieurs propriétés mesurées par une méthode de référence.",
+      "png": "data/icones/calibrer_light.png",
+      "svg": "svg/calibrer.svg",
+      "source_recadree": "sources_recadrees/calibrer.png"
+    },
+    {
+      "id": "predire",
+      "titre": "Prédire",
+      "sstitre": "Appliquer un modèle",
+      "description": "Utiliser un modèle existant pour produire des valeurs prédites à partir de nouveaux spectres.",
+      "png": "data/icones/predire_light.png",
+      "svg": "svg/predire.svg",
+      "source_recadree": "sources_recadrees/predire.png"
+    },
+    {
+      "id": "entretenir",
+      "titre": "Entretenir",
+      "sstitre": "Maintenir un modèle",
+      "description": "Vérifier les performances d’un modèle, corriger un biais, le mettre à jour ou le transférer vers un autre instrument.",
+      "png": "data/icones/entretenir_light.png",
+      "svg": "svg/entretenir.svg",
+      "source_recadree": "sources_recadrees/entretenir.png"
+    },
+    {
+      "id": "autre-demande",
+      "titre": "Autre demande",
+      "sstitre": "Prestation chimiométrique sur mesure",
+      "description": "Décrire un besoin qui ne correspond pas aux prestations proposées. Le périmètre et le coût seront définis avec le plateau.",
+      "png": "data/icones/autre_light.png",
+      "svg": "svg/autre-demande.svg",
+      "source_recadree": "sources_recadrees/autre-demande.png"
+    },
+    {
+      "id": "viavi-micronir",
+      "titre": "VIAVI MicroNIR",
+      "sstitre": "NIR portable",
+      "description": "Acquérir rapidement des spectres NIR sur des échantillons préparés ou des objets compatibles, au laboratoire ou sur site.",
+      "png": "data/icones/micronir2_light.png",
+      "svg": "svg/viavi-micronir.svg",
+      "source_recadree": "sources_recadrees/viavi-micronir.png"
+    },
+    {
+      "id": "bruker-tango",
+      "titre": "Bruker TANGO",
+      "sstitre": "FT-NIR de paillasse",
+      "description": "Acquérir des spectres FT-NIR de routine au laboratoire, avec transport possible selon les conditions du projet.",
+      "png": "data/icones/tango2_light.png",
+      "svg": "svg/bruker-tango.svg",
+      "source_recadree": "sources_recadrees/bruker-tango.png"
+    },
+    {
+      "id": "asd-labspec",
+      "titre": "ASD LabSpec",
+      "sstitre": "NIR portable avec sonde",
+      "description": "Acquérir des spectres NIR au laboratoire ou sur le terrain, avec une sonde ou une fibre optique.",
+      "png": "data/icones/labspec2_light.png",
+      "svg": "svg/asd-labspec.svg",
+      "source_recadree": "sources_recadrees/asd-labspec.png"
+    },
+    {
+      "id": "mir-perkinelmer",
+      "titre": "MIR PerkinElmer",
+      "sstitre": "FTIR / moyen infrarouge",
+      "description": "Acquérir des spectres MIR, notamment en ATR, selon la nature et la préparation des échantillons.",
+      "png": "data/icones/spectrumII2_light.png",
+      "svg": "svg/mir-perkinelmer.svg",
+      "source_recadree": "sources_recadrees/mir-perkinelmer.png"
+    },
+    {
+      "id": "me-former",
+      "titre": "Me former",
+      "sstitre": "Module en préparation",
+      "description": "La demande directe de formation sera disponible dans une prochaine version. Les formations obligatoires liées à une utilisation autonome restent ajoutées automatiquement au pré-devis.",
+      "categorie": "Se former",
+      "badge": "Module en préparation",
+      "png": "data/icones/se former_light.png",
+      "svg": "svg/me-former.svg",
+      "source_recadree": "sources_recadrees/me-former.png"
+    }
+  ]
+}

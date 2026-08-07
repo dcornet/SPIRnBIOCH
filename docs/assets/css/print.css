@@ -1,0 +1,51 @@
+@page {
+  size: A4 portrait;
+  margin: 14mm;
+}
+
+body {
+  background: #fff;
+  color: #000;
+}
+
+.skip-link,
+.progress,
+.wizard-nav,
+.actions,
+.education,
+.hero img,
+.hero__signature {
+  display: none !important;
+}
+
+.app-shell {
+  width: 100%;
+  padding: 0;
+}
+
+.hero,
+.wizard,
+.step-panel,
+.quote-card {
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.app-notice,
+.notice-inline,
+.warning-list {
+  border: 1px solid #999;
+  background: #fff;
+  color: #000;
+}
+
+table {
+  min-width: 0;
+  font-size: 9pt;
+}
+
+th,
+td {
+  padding: 5pt;
+}

@@ -1,0 +1,1545 @@
+{
+  "metadata": {
+    "version": "0.3.20",
+    "validFrom": "2026-01-01",
+    "currency": "EUR",
+    "taxMode": "HT",
+    "contractual": false,
+    "statusNote": "Règles de travail actives et auditables ; hypothèses économiques à confronter aux données réelles.",
+    "lastAuditDate": "2026-08-07"
+  },
+  "instrumentCostModelSettings": {
+    "amortizationYears": 7,
+    "sharedAnnualCosts": {
+      "softwareAndLicensesTotal": 1000,
+      "standardsAndReferencesTotal": 1000,
+      "informationTechnologyTotal": 1000,
+      "allocationMode": "equal",
+      "instrumentCount": 4
+    },
+    "insuranceTotal": 0,
+    "centralTargetHalfDaysPerYear": 240,
+    "capacityScenarios": {
+      "low": 160,
+      "central": 240,
+      "high": 320
+    },
+    "directStaffHourlyRate": 65,
+    "hoursPerHalfDay": 4,
+    "selfServicePreparationReturnHours": 0.5,
+    "rounding": {
+      "precision": 1,
+      "mode": "nearest"
+    },
+    "assistedDirectStaffHourlyRate": 32.5,
+    "autonomousTechnicalSupportRate": 0.1,
+    "selfServicePreparationReturnHoursDeprecated": true,
+    "assistedDirectStaffHourlyRateDeprecated": true
+  },
+  "trainingPricing": {
+    "refresherCoefficient": 0.5,
+    "multipleTrainingPolicy": {
+      "enabled": false,
+      "description": "Aucune reduction automatique de cumul."
+    },
+    "theoreticalNirs": {
+      "label": "Formation théorique NIRS",
+      "pricingMode": "session_capacity",
+      "amountPerSession": 400,
+      "maxPeoplePerSession": 8,
+      "durationHours": 4,
+      "discussionRangePolicy": {
+        "mode": "none"
+      },
+      "requiresValidation": true,
+      "costCategory": "training",
+      "partnershipTreatment": "offered"
+    }
+  },
+  "preQuoteUncertainty": {
+    "enabled": true,
+    "rate": 0.15,
+    "stabilizeRangesBeforeContext": true,
+    "stabilizationMode": "midpoint",
+    "excludedConfigRules": [
+      "externalAdministrativeFee",
+      "instrumentTraining"
+    ],
+    "description": "Fourchette uniforme de ±15 % autour du coût technique de référence pour toutes les prestations chiffrées éligibles, y compris la prédiction et l’entretien. Hors forfait de gestion, formations, transport fixe, frais externes et éléments sur devis.",
+    "useLineDiscussionRangePolicy": true
+  },
+  "instruments": {
+    "viavi_micronir": {
+      "label": "VIAVI MicroNIR OnSite-W",
+      "shortLabel": "MicroNIR",
+      "supportsFieldWork": true,
+      "portable": true,
+      "autonomousReservationUnit": "half_day",
+      "hoursPerDay": 7,
+      "prices": {
+        "initial_training": {
+          "label": "Formation initiale",
+          "min": 150,
+          "max": 150,
+          "unit": "participant",
+          "pricingMode": "range",
+          "costCategory": "training",
+          "partnershipTreatment": "offered"
+        },
+        "refresher_training": {
+          "label": "Remise à niveau",
+          "min": 75,
+          "max": 75,
+          "unit": "participant",
+          "pricingMode": "range",
+          "costCategory": "training",
+          "partnershipTreatment": "offered"
+        }
+      },
+      "assistedReservationUnit": "half_day",
+      "hoursPerHalfDay": 4,
+      "costModel": {
+        "enabled": true,
+        "version": "2026.1",
+        "status": "working_assumption",
+        "currency": "EUR",
+        "purchase": {
+          "marketMin": 22000,
+          "marketMax": 30000,
+          "workingValue": 30000,
+          "includes": [
+            "MicroNIR OnSite-W",
+            "logiciel MicroNIR Pro",
+            "applicateurs fournis",
+            "sonde à comprimé",
+            "accessoires pour vial",
+            "accessoires pour liquide"
+          ],
+          "confidence": "medium_high",
+          "requiresRecentQuote": true
+        },
+        "annualCosts": {
+          "maintenance": 600,
+          "indirectPersonnel": 800,
+          "softwareAndLicenses": 250,
+          "standardsAndReferences": 250,
+          "informationTechnology": 250,
+          "insurance": 0
+        },
+        "capacity": {
+          "targetHalfDaysPerYear": 240
+        },
+        "directServiceCosts": {
+          "routineConsumablesPerHalfDay": 5,
+          "selfServicePreparationReturnHours": 0.5,
+          "assistedStaffHoursPerHalfDay": 4
+        },
+        "pricing": {
+          "mode": "cost_model",
+          "manualOverride": {
+            "enabled": false,
+            "selfServiceHalfDay": {
+              "pricingMode": "fixed",
+              "amount": null
+            },
+            "assistedHalfDay": {
+              "pricingMode": "fixed",
+              "amount": null
+            }
+          }
+        }
+      },
+      "transportPolicy": "included_portable",
+      "transportFee": 0
+    },
+    "bruker_tango": {
+      "label": "Bruker TANGO II",
+      "shortLabel": "TANGO",
+      "supportsFieldWork": false,
+      "portable": false,
+      "autonomousReservationUnit": "half_day",
+      "prices": {
+        "initial_training": {
+          "label": "Formation initiale",
+          "min": 250,
+          "max": 250,
+          "unit": "participant",
+          "pricingMode": "range",
+          "costCategory": "training",
+          "partnershipTreatment": "offered"
+        },
+        "refresher_training": {
+          "label": "Remise à niveau",
+          "min": 125,
+          "max": 125,
+          "unit": "participant",
+          "pricingMode": "range",
+          "costCategory": "training",
+          "partnershipTreatment": "offered"
+        }
+      },
+      "assistedReservationUnit": "half_day",
+      "hoursPerHalfDay": 4,
+      "costModel": {
+        "enabled": true,
+        "version": "2026.1",
+        "status": "working_assumption",
+        "currency": "EUR",
+        "purchase": {
+          "marketMin": 50000,
+          "marketMax": 70000,
+          "workingValue": 60000,
+          "includes": [
+            "TANGO II",
+            "poste de pilotage",
+            "logiciel OPUS",
+            "coupelle ou dispositif rotatif",
+            "supports pour flacons et piluliers"
+          ],
+          "confidence": "medium_low",
+          "requiresRecentQuote": true
+        },
+        "annualCosts": {
+          "maintenance": 1500,
+          "indirectPersonnel": 1200,
+          "softwareAndLicenses": 250,
+          "standardsAndReferences": 250,
+          "informationTechnology": 250,
+          "insurance": 0
+        },
+        "capacity": {
+          "targetHalfDaysPerYear": 240
+        },
+        "directServiceCosts": {
+          "routineConsumablesPerHalfDay": 5,
+          "selfServicePreparationReturnHours": 0.5,
+          "assistedStaffHoursPerHalfDay": 4
+        },
+        "pricing": {
+          "mode": "cost_model",
+          "manualOverride": {
+            "enabled": false,
+            "selfServiceHalfDay": {
+              "pricingMode": "fixed",
+              "amount": null
+            },
+            "assistedHalfDay": {
+              "pricingMode": "fixed",
+              "amount": null
+            }
+          }
+        }
+      },
+      "transportPolicy": "fixed_fee",
+      "transportFee": 150
+    },
+    "asd_labspec": {
+      "label": "ASD LabSpec 4",
+      "shortLabel": "LabSpec",
+      "supportsFieldWork": true,
+      "portable": true,
+      "autonomousReservationUnit": "half_day",
+      "hoursPerDay": 7,
+      "prices": {
+        "initial_training": {
+          "label": "Formation initiale",
+          "min": 250,
+          "max": 250,
+          "unit": "participant",
+          "pricingMode": "range",
+          "costCategory": "training",
+          "partnershipTreatment": "offered"
+        },
+        "refresher_training": {
+          "label": "Remise à niveau",
+          "min": 125,
+          "max": 125,
+          "unit": "participant",
+          "pricingMode": "range",
+          "costCategory": "training",
+          "partnershipTreatment": "offered"
+        }
+      },
+      "assistedReservationUnit": "half_day",
+      "hoursPerHalfDay": 4,
+      "costModel": {
+        "enabled": true,
+        "version": "2026.1",
+        "status": "working_assumption",
+        "currency": "EUR",
+        "purchase": {
+          "marketMin": 48000,
+          "marketMax": 58000,
+          "workingValue": 55000,
+          "includes": [
+            "LabSpec 4",
+            "logiciel",
+            "ordinateur",
+            "pince ou sonde de contact",
+            "fibre optique",
+            "accessoires de référence"
+          ],
+          "confidence": "medium",
+          "requiresRecentQuote": true
+        },
+        "annualCosts": {
+          "maintenance": 1200,
+          "indirectPersonnel": 1500,
+          "softwareAndLicenses": 250,
+          "standardsAndReferences": 250,
+          "informationTechnology": 250,
+          "insurance": 0
+        },
+        "capacity": {
+          "targetHalfDaysPerYear": 240
+        },
+        "directServiceCosts": {
+          "routineConsumablesPerHalfDay": 5,
+          "selfServicePreparationReturnHours": 0.5,
+          "assistedStaffHoursPerHalfDay": 4
+        },
+        "pricing": {
+          "mode": "cost_model",
+          "manualOverride": {
+            "enabled": false,
+            "selfServiceHalfDay": {
+              "pricingMode": "fixed",
+              "amount": null
+            },
+            "assistedHalfDay": {
+              "pricingMode": "fixed",
+              "amount": null
+            }
+          }
+        }
+      },
+      "transportPolicy": "fixed_fee",
+      "transportFee": 150
+    },
+    "mir_perkin_elmer": {
+      "label": "PerkinElmer Spectrum Two FTIR",
+      "shortLabel": "PerkinElmer",
+      "supportsFieldWork": false,
+      "portable": false,
+      "autonomousReservationUnit": "half_day",
+      "prices": {
+        "initial_training": {
+          "label": "Formation initiale",
+          "min": 250,
+          "max": 250,
+          "unit": "participant",
+          "pricingMode": "range",
+          "costCategory": "training",
+          "partnershipTreatment": "offered"
+        },
+        "refresher_training": {
+          "label": "Remise à niveau",
+          "min": 125,
+          "max": 125,
+          "unit": "participant",
+          "pricingMode": "range",
+          "costCategory": "training",
+          "partnershipTreatment": "offered"
+        }
+      },
+      "assistedReservationUnit": "half_day",
+      "hoursPerHalfDay": 4,
+      "costModel": {
+        "enabled": true,
+        "version": "2026.1",
+        "status": "working_assumption",
+        "currency": "EUR",
+        "purchase": {
+          "marketMin": 25000,
+          "marketMax": 35000,
+          "workingValue": 30000,
+          "includes": [
+            "Spectrum Two FTIR",
+            "logiciel Spectrum",
+            "accessoire ATR diamant",
+            "éléments usuels de contrôle"
+          ],
+          "confidence": "medium",
+          "requiresRecentQuote": true
+        },
+        "annualCosts": {
+          "maintenance": 1000,
+          "indirectPersonnel": 1000,
+          "softwareAndLicenses": 250,
+          "standardsAndReferences": 250,
+          "informationTechnology": 250,
+          "insurance": 0
+        },
+        "capacity": {
+          "targetHalfDaysPerYear": 240
+        },
+        "directServiceCosts": {
+          "routineConsumablesPerHalfDay": 8,
+          "selfServicePreparationReturnHours": 0.5,
+          "assistedStaffHoursPerHalfDay": 4
+        },
+        "pricing": {
+          "mode": "cost_model",
+          "manualOverride": {
+            "enabled": false,
+            "selfServiceHalfDay": {
+              "pricingMode": "fixed",
+              "amount": null
+            },
+            "assistedHalfDay": {
+              "pricingMode": "fixed",
+              "amount": null
+            }
+          }
+        }
+      },
+      "transportPolicy": "forbidden",
+      "transportFee": null
+    }
+  },
+  "chemometrics": {
+    "validated_calibration": {
+      "label": "Calibration validée standard",
+      "unit": "database",
+      "pricingMode": "sample_threshold",
+      "internalNote": "Une prestation correspond à une ou plusieurs calibrations sur une même matrice et une même base de données. Plusieurs matrices, familles ou spectromètres nécessitent une demande spécifique.",
+      "additionalTrait": {
+        "label": "Trait supplémentaire en calibration",
+        "amount": 300,
+        "unit": "trait"
+      },
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "costCategory": "scientific_expertise",
+      "thresholds": [
+        {
+          "min": 1,
+          "max": 250,
+          "amount": 1500
+        },
+        {
+          "min": 251,
+          "max": 750,
+          "amount": 2000
+        },
+        {
+          "min": 751,
+          "max": 2000,
+          "amount": 2500
+        },
+        {
+          "min": 2001,
+          "pricingMode": "quote",
+          "labelForQuote": "Calibration sur plus de 2 000 échantillons indépendants"
+        }
+      ],
+      "sampleField": "samples",
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "technicalReferenceNote": "Tranche pilotée par les échantillons indépendants ; les répétitions n'augmentent pas la tranche."
+    },
+    "local_model_validation": {
+      "label": "Validation locale d'un modèle",
+      "min": 800,
+      "max": 800,
+      "unit": "validation",
+      "pricingMode": "reference_sample_brackets",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "costCategory": "scientific_expertise",
+      "thresholds": [
+        {
+          "min": 1,
+          "max": 100,
+          "amount": 900
+        },
+        {
+          "min": 101,
+          "max": 300,
+          "amount": 1300
+        },
+        {
+          "min": 301,
+          "max": 1000,
+          "amount": 1800
+        },
+        {
+          "min": 1001,
+          "pricingMode": "quote",
+          "labelForQuote": "Validation sur plus de 1 000 échantillons avec valeur de référence"
+        }
+      ],
+      "additionalTrait": {
+        "label": "Propriété supplémentaire en validation",
+        "amount": 300,
+        "unit": "trait"
+      },
+      "additionalInstrument": {
+        "label": "Instrument supplémentaire en validation",
+        "amount": 300,
+        "unit": "instrument"
+      },
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      }
+    },
+    "bias_correction": {
+      "label": "Correction de biais",
+      "min": 500,
+      "max": 500,
+      "unit": "model",
+      "pricingMode": "paired_reference_brackets",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "costCategory": "scientific_expertise",
+      "thresholds": [
+        {
+          "min": 1,
+          "max": 300,
+          "amount": 650
+        },
+        {
+          "min": 301,
+          "max": 1000,
+          "amount": 900
+        },
+        {
+          "min": 1001,
+          "pricingMode": "quote",
+          "labelForQuote": "Correction de biais sur plus de 1 000 couples prédiction-référence"
+        }
+      ],
+      "additionalTraitInstrument": {
+        "label": "Couple propriété-instrument supplémentaire",
+        "amount": 250,
+        "unit": "trait_instrument"
+      },
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "legacy": true,
+      "publicVisible": false
+    },
+    "calibration_transfer": {
+      "label": "Transfert entre instruments",
+      "pricingMode": "base_plus_additional_trait",
+      "baseAmount": 2000,
+      "unit": "transfer",
+      "additionalTrait": {
+        "label": "Trait supplémentaire en transfert",
+        "amount": 500,
+        "unit": "trait"
+      },
+      "internalNote": "Base de 2000 EUR pour le premier trait transféré entre instruments, puis 500 EUR par trait supplémentaire.",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "costCategory": "scientific_expertise",
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "legacy": true,
+      "publicVisible": false
+    },
+    "annual_audit": {
+      "label": "Audit annuel",
+      "min": 500,
+      "max": 500,
+      "unit": "model",
+      "pricingMode": "spectra_brackets",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "costCategory": "scientific_expertise",
+      "thresholds": [
+        {
+          "min": 0,
+          "max": 500,
+          "amount": 600
+        },
+        {
+          "min": 501,
+          "max": 2000,
+          "amount": 900
+        },
+        {
+          "min": 2001,
+          "max": 5000,
+          "amount": 1200
+        },
+        {
+          "min": 5001,
+          "pricingMode": "quote",
+          "labelForQuote": "Audit de plus de 5 000 spectres"
+        }
+      ],
+      "additionalTrait": {
+        "label": "Modèle ou propriété supplémentaire en audit",
+        "amount": 200,
+        "unit": "trait"
+      },
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      }
+    },
+    "light_update": {
+      "label": "Mise à jour",
+      "min": 500,
+      "max": 500,
+      "unit": "update",
+      "pricingMode": "new_sample_brackets",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "costCategory": "scientific_expertise",
+      "thresholds": [
+        {
+          "min": 1,
+          "max": 100,
+          "amount": 1200
+        },
+        {
+          "min": 101,
+          "max": 500,
+          "amount": 2000
+        },
+        {
+          "min": 501,
+          "max": 1500,
+          "amount": 3000
+        },
+        {
+          "min": 1501,
+          "pricingMode": "quote",
+          "labelForQuote": "Mise à jour sur plus de 1 500 nouveaux échantillons"
+        }
+      ],
+      "additionalTrait": {
+        "label": "Propriété supplémentaire en mise à jour",
+        "amount": 400,
+        "unit": "trait"
+      },
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "legacy": true,
+      "publicVisible": false
+    },
+    "prediction_batch_setup": {
+      "label": "Préparation d'un lot de prédictions",
+      "min": 80,
+      "max": 80,
+      "unit": "batch",
+      "pricingMode": "fixed",
+      "costCategory": "personnel",
+      "deprecated": true,
+      "replacement": "existing_model_predictions"
+    },
+    "prediction_per_spectrum": {
+      "label": "Prédiction avec modèle existant",
+      "min": 0.5,
+      "max": 0.5,
+      "unit": "spectrum",
+      "pricingMode": "fixed",
+      "costCategory": "personnel",
+      "deprecated": true,
+      "replacement": "existing_model_predictions"
+    },
+    "instrument_qualification": {
+      "label": "Étalonnage ou qualification instrumentale",
+      "pricingMode": "quote",
+      "labelForQuote": "Sur devis",
+      "costCategory": "personnel",
+      "legacy": true,
+      "publicVisible": false
+    },
+    "other_chemometrics": {
+      "label": "Autre demande chimiométrique",
+      "pricingMode": "quote",
+      "labelForQuote": "À discuter avec le plateau",
+      "costCategory": "personnel"
+    },
+    "existing_model_predictions": {
+      "label": "Prédiction avec modèle existant",
+      "unit": "batch",
+      "pricingMode": "prediction_formula",
+      "setupAmount": 150,
+      "perSpectrumAmount": 0.35,
+      "additionalModelPerSpectrumAmount": 0.25,
+      "minimumAmount": 250,
+      "maxSpectra": 10000,
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "included": "Contrôle courant du lot, application des modèles, fichier standard de résultats et signalement élémentaire des spectres atypiques.",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "costCategory": "scientific_expertise"
+    }
+  },
+  "options": {
+    "quality_control": {
+      "label": "Contrôle qualité du lot",
+      "min": 60,
+      "max": 60,
+      "unit": "forfait",
+      "pricingMode": "fixed",
+      "costCategory": "personnel",
+      "standardIncludedInChemometrics": true
+    },
+    "scientific_interpretation_hourly": {
+      "label": "Interprétation scientifique",
+      "min": 100,
+      "max": 100,
+      "unit": "hour",
+      "pricingMode": "fixed",
+      "costCategory": "personnel"
+    },
+    "formal_report": {
+      "label": "Rapport formalisé",
+      "min": 200,
+      "max": 200,
+      "unit": "report",
+      "pricingMode": "fixed",
+      "costCategory": "personnel",
+      "standardIncludedInChemometrics": true
+    },
+    "urgent_markup": {
+      "label": "Majoration d'urgence",
+      "rate": 0.15,
+      "unit": "percent",
+      "pricingMode": "fixed_percent",
+      "costCategory": "technical_non_personnel"
+    },
+    "training_extra_person": {
+      "label": "Supplément de formation par personne",
+      "min": 50,
+      "max": 50,
+      "unit": "person",
+      "pricingMode": "range",
+      "deprecated": true,
+      "costCategory": "training"
+    },
+    "externalAdministrativeFee": {
+      "enabled": true,
+      "mandatory": true,
+      "provisional": false,
+      "requiresValidation": false,
+      "label": "Forfait de gestion",
+      "publicLabel": "Forfait de gestion",
+      "pricingMode": "by_context",
+      "defaultContext": "subcontracting",
+      "contexts": {
+        "internal_agap": {
+          "pricingMode": "fixed",
+          "amount": 150
+        },
+        "public_research_lab": {
+          "pricingMode": "fixed",
+          "amount": 150,
+          "requiresValidation": true
+        },
+        "partnership": {
+          "pricingMode": "fixed",
+          "amount": 150
+        },
+        "subcontracting": {
+          "pricingMode": "fixed",
+          "amount": 300
+        }
+      },
+      "amount": 300,
+      "min": 300,
+      "max": 300,
+      "unit": "quote",
+      "helpText": "Ces frais couvrent, de manière non exhaustive, les échanges préparatoires, la gestion administrative et financière du dossier, l’élaboration des documents, la facturation et le suivi des règlements, ainsi que les vérifications techniques, la planification, la coordination des intervenants et les conseils nécessaires à la bonne réalisation du projet.",
+      "internalNote": "Forfait de gestion : 150 EUR pour une demande interne, un laboratoire public ou un partenariat, 300 EUR pour une sous-traitance.",
+      "costCategory": "administrative"
+    },
+    "billing_minimum": {
+      "label": "Minimum de facturation",
+      "min": 150,
+      "max": 150,
+      "unit": "quote",
+      "pricingMode": "fixed",
+      "costCategory": "administrative"
+    },
+    "prediction_additional_model_per_spectrum": {
+      "label": "Modèle ou propriété supplémentaire appliquée",
+      "min": 0.5,
+      "max": 0.5,
+      "unit": "spectrum_model",
+      "pricingMode": "fixed",
+      "costCategory": "personnel",
+      "deprecated": true
+    },
+    "travel_expenses": {
+      "pricingMode": "quote",
+      "label": "Déplacement",
+      "labelForQuote": "Sur devis",
+      "costCategory": "pass_through"
+    },
+    "accommodation_expenses": {
+      "pricingMode": "quote",
+      "label": "Hébergement ou frais au réel",
+      "labelForQuote": "À discuter avec le plateau",
+      "costCategory": "pass_through"
+    },
+    "transport_markup": {
+      "label": "Majoration de transport instrument",
+      "rate": 0.1,
+      "unit": "percent",
+      "pricingMode": "fixed_percent",
+      "costCategory": "logistics",
+      "deprecated": true,
+      "replacement": "instrument_transport"
+    },
+    "chemometric_data_preparation": {
+      "label": "Préparation et nettoyage des données",
+      "pricingMode": "scan_brackets",
+      "unit": "scan_batch",
+      "provisional": true,
+      "requiresValidation": true,
+      "internalNote": "Forfaits par volume de spectres totaux (échantillons × répétitions) ; plus de 5 000 spectres ou jointure complexe sur devis.",
+      "costCategory": "scientific_expertise",
+      "thresholds": [
+        {
+          "min": 0,
+          "max": 500,
+          "amount": 200
+        },
+        {
+          "min": 501,
+          "max": 2000,
+          "amount": 400
+        },
+        {
+          "min": 2001,
+          "max": 5000,
+          "amount": 800
+        },
+        {
+          "min": 5001,
+          "pricingMode": "quote",
+          "labelForQuote": "Préparation de plus de 5 000 spectres ou jointure complexe"
+        }
+      ],
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      }
+    },
+    "instrument_transport": {
+      "label": "Transport du spectromètre",
+      "pricingMode": "fixed",
+      "amount": 150,
+      "unit": "transport_occurrence",
+      "discussionRangePolicy": {
+        "mode": "none"
+      },
+      "applyContextCoefficient": false,
+      "partnershipTreatment": "full_price",
+      "costCategory": "logistics"
+    }
+  },
+  "contexts": {
+    "occasional_help": {
+      "label": "Aide ponctuelle",
+      "description": "Ancien contexte masqué, migré vers une demande interne UMR AGAP Institut.",
+      "costCoefficient": {
+        "min": 1,
+        "max": 1
+      },
+      "display": "prix au coût estimatif",
+      "mode": "direct",
+      "publicVisible": false,
+      "legacy": true,
+      "legacyMigrationTarget": "internal_agap"
+    },
+    "collaborative_project": {
+      "label": "Projet collaboratif",
+      "description": "Ancien contexte masqué, migré vers le partenariat.",
+      "costCoefficient": {
+        "min": 1,
+        "max": 1
+      },
+      "mode": "direct",
+      "notice": "Cette répartition est indicative. Elle doit être définie dans la convention, le budget ou l'accord de collaboration.",
+      "publicVisible": false,
+      "legacy": true,
+      "legacyMigrationTarget": "partnership"
+    },
+    "internal_agap": {
+      "label": "UMR AGAP Institut — demande interne",
+      "shortLabel": "Interne AGAP",
+      "description": "Demande portée par une équipe, un projet ou une activité de l’UMR AGAP Institut. La tarification est établie à partir du coût technique estimatif, sans majoration liée au contexte.",
+      "publicVisible": true,
+      "iconPath": "./assets/images/contextes/internal-agap.png",
+      "order": 10,
+      "mode": "direct",
+      "costCoefficient": {
+        "min": 1,
+        "max": 1
+      },
+      "requiresProjectDetails": false,
+      "requiresDiscussion": false,
+      "billingPolicy": {
+        "personnelBilled": true,
+        "trainingBilled": true,
+        "billingMinimumApplies": true,
+        "preQuoteUncertaintyApplies": true
+      },
+      "display": ""
+    },
+    "partnership": {
+      "label": "Partenariat scientifique avec Bioch&SPIR",
+      "shortLabel": "Partenariat",
+      "description": "Projet co-construit dans lequel Bioch&SPIR contribue aux objectifs, méthodes, analyses ou livrables. Une partie des moyens mobilisés peut constituer une contribution du plateau au projet.",
+      "publicVisible": true,
+      "iconPath": "./assets/images/contextes/partnership.png",
+      "order": 30,
+      "mode": "negotiated_partnership",
+      "billedShare": {
+        "min": 0.5,
+        "max": 1
+      },
+      "requiresProjectDetails": true,
+      "requiresDiscussion": true,
+      "notice": "La part facturée sera définie avec le plateau après discussion du projet.",
+      "billingPolicy": {
+        "offeredCategories": [
+          "personnel",
+          "training",
+          "instrument_staff"
+        ],
+        "negotiatedCategories": [
+          "equipment",
+          "consumables",
+          "technical_non_personnel",
+          "scientific_expertise",
+          "computing_infrastructure"
+        ],
+        "fullPriceCategories": [
+          "administrative",
+          "logistics",
+          "pass_through"
+        ],
+        "billingMinimumApplies": false,
+        "preQuoteUncertaintyApplies": true
+      }
+    },
+    "subcontracting": {
+      "label": "Sous-traitance / prestation de service",
+      "shortLabel": "Sous-traitance",
+      "description": "Prestation réalisée pour un commanditaire selon un périmètre, des délais et des livrables définis, sans co-construction scientifique du projet avec le plateau.",
+      "publicVisible": true,
+      "iconPath": "./assets/images/contextes/subcontracting.png",
+      "order": 40,
+      "mode": "markup",
+      "costCoefficient": {
+        "min": 1.35,
+        "max": 1.35
+      },
+      "requiresProjectDetails": false,
+      "requiresDiscussion": false,
+      "billingPolicy": {
+        "personnelBilled": true,
+        "trainingBilled": true,
+        "billingMinimumApplies": true,
+        "preQuoteUncertaintyApplies": true
+      },
+      "display": "",
+      "internalNote": "Ajustement couvrant la responsabilité contractuelle, les aléas d’exécution et la marge tarifaire."
+    },
+    "public_research_lab": {
+      "label": "Laboratoire public de recherche — hors UMR AGAP Institut",
+      "shortLabel": "Laboratoire public",
+      "description": "Prestation destinée à une unité publique de recherche extérieure à l’UMR AGAP Institut, lorsqu’il ne s’agit pas d’un partenariat scientifique co-construit avec Bioch&SPIR.",
+      "publicVisible": true,
+      "iconPath": "./assets/images/contextes/public-research.png",
+      "order": 20,
+      "mode": "markup",
+      "costCoefficient": {
+        "min": 1.1,
+        "max": 1.1
+      },
+      "requiresValidation": true,
+      "internalNote": "Coefficient académique de travail à valider après les premiers dossiers.",
+      "requiresProjectDetails": false,
+      "requiresDiscussion": false,
+      "billingPolicy": {
+        "personnelBilled": true,
+        "trainingBilled": true,
+        "billingMinimumApplies": true,
+        "preQuoteUncertaintyApplies": true
+      },
+      "display": ""
+    }
+  },
+  "calculation": {
+    "extraRepetitionMultiplier": {
+      "min": 0.4,
+      "max": 0.6
+    },
+    "defaultPreparationHours": 1,
+    "defaultScientificInterpretationHours": 1,
+    "maxQuantity": 100000
+  },
+  "rounding": {
+    "precision": 1,
+    "mode": "nearest"
+  },
+  "disclaimers": [
+    "Tarifs indicatifs, hors taxes et non contractuels.",
+    "TVA éventuelle en supplément.",
+    "Analyses de référence : non incluses sauf mention contraire ; elles feront l’objet d’un chiffrage adapté aux méthodes nécessaires.",
+    "Préparation complexe des échantillons non incluse.",
+    "Déplacement et hébergement non inclus sauf mention contraire.",
+    "Délai à confirmer.",
+    "Validité du modèle limitée au domaine de calibration.",
+    "Devis final établi après revue scientifique et technique."
+  ],
+  "matrixPresentations": [
+    {
+      "value": "powder",
+      "label": "Poudre ou matrice finement broyée"
+    },
+    {
+      "value": "homogeneous_solid",
+      "label": "Solide homogène"
+    },
+    {
+      "value": "whole_solid_object",
+      "label": "Solide entier ou objet"
+    },
+    {
+      "value": "liquid",
+      "label": "Liquide"
+    },
+    {
+      "value": "paste_wet_matrix",
+      "label": "Pâte ou matrice humide"
+    },
+    {
+      "value": "heterogeneous_coarse",
+      "label": "Matrice hétérogène ou grossière"
+    },
+    {
+      "value": "other",
+      "label": "Autre"
+    }
+  ],
+  "reservation": {
+    "hoursPerHalfDay": 4
+  },
+  "spectralThroughputProfiles": {
+    "asd_labspec": {
+      "clamp": {
+        "label": "Pince",
+        "default": true,
+        "measurementWindow": "Zone circulaire d’environ 10 mm de diamètre.",
+        "samplesPerHour": {
+          "min": 12,
+          "max": 25
+        }
+      },
+      "optical_fiber": {
+        "label": "Fibre optique",
+        "measurementWindow": "Zone dépendant de la distance entre la fibre et l’échantillon ; généralement quelques millimètres à environ 1 cm.",
+        "samplesPerHour": {
+          "min": 15,
+          "max": 30
+        }
+      }
+    },
+    "viavi_micronir": {
+      "direct_measurement": {
+        "label": "Mesure directe sans adaptateur",
+        "default": true,
+        "measurementWindow": "Capacité indicative à valider par le plateau pour la mesure directe sans adaptateur.",
+        "samplesPerHour": {
+          "min": 20,
+          "max": 40
+        },
+        "requiresValidation": true
+      },
+      "tablet_probe": {
+        "label": "Sonde à comprimé",
+        "measurementWindow": "Zone centrale du comprimé en contact avec la sonde ; dimension exacte selon l’embout utilisé.",
+        "samplesPerHour": {
+          "min": 12,
+          "max": 25
+        }
+      },
+      "vial_holder": {
+        "label": "Support pour vial",
+        "measurementWindow": "Mesure à travers la paroi du vial sur une zone de quelques millimètres ; elle dépend du diamètre et du matériau du vial.",
+        "samplesPerHour": {
+          "min": 10,
+          "max": 20
+        }
+      },
+      "liquid_drop_adapter": {
+        "label": "Adaptateur pour liquide — goutte",
+        "measurementWindow": "Petite zone couverte par une goutte déposée sur la fenêtre de mesure.",
+        "samplesPerHour": {
+          "min": 6,
+          "max": 12
+        }
+      }
+    },
+    "bruker_tango": {
+      "direct_measurement": {
+        "label": "Mesure directe",
+        "default": true,
+        "measurementWindow": "Zone d’analyse d’environ 10 mm de diamètre.",
+        "samplesPerHour": {
+          "min": 12,
+          "max": 25
+        }
+      },
+      "cup_5cm": {
+        "label": "Coupelle 5 cm",
+        "measurementWindow": "Zone instrumentale d’environ 10 mm ; la surface effective est plus grande lorsque la coupelle tourne.",
+        "samplesPerHour": {
+          "min": 8,
+          "max": 18
+        }
+      },
+      "cup_9cm": {
+        "label": "Coupelle 9 cm",
+        "measurementWindow": "Zone instrumentale d’environ 10 mm ; la surface effective est plus grande lorsque la coupelle tourne.",
+        "samplesPerHour": {
+          "min": 8,
+          "max": 18
+        }
+      },
+      "vial_or_bottle": {
+        "label": "Pilulier ou flacon",
+        "measurementWindow": "Mesure à travers la paroi du contenant sur une zone d’environ 10 mm.",
+        "samplesPerHour": {
+          "min": 10,
+          "max": 20
+        }
+      }
+    },
+    "mir_perkin_elmer": {
+      "diamond_atr": {
+        "label": "ATR diamant",
+        "default": true,
+        "measurementWindow": "Zone de contact de quelques millimètres, selon le cristal ATR.",
+        "samplesPerHour": {
+          "min": 6,
+          "max": 15
+        }
+      }
+    }
+  },
+  "instrumentTransferPricingProfiles": {
+    "validated_paired_transfer": {
+      "pricingMode": "base_plus_additional_trait",
+      "baseAmount": 2000,
+      "additionalTraitAmount": 500,
+      "pairedSampleSurcharge": {
+        "min": 251,
+        "max": 750,
+        "amount": 500
+      },
+      "pairedSampleQuoteAbove": 750,
+      "requiresValidation": true,
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      }
+    },
+    "partially_validated_paired_transfer": {
+      "pricingMode": "base_plus_additional_trait",
+      "baseAmount": 1600,
+      "additionalTraitAmount": 500,
+      "pairedSampleSurcharge": {
+        "min": 251,
+        "max": 750,
+        "amount": 500
+      },
+      "pairedSampleQuoteAbove": 750,
+      "requiresValidation": true,
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      }
+    },
+    "unvalidated_spectral_standardization": {
+      "pricingMode": "base_plus_additional_trait",
+      "baseAmount": 1200,
+      "additionalTraitAmount": 300,
+      "pairedSampleSurcharge": {
+        "min": 251,
+        "max": 750,
+        "amount": 500
+      },
+      "pairedSampleQuoteAbove": 750,
+      "requiresValidation": true,
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      }
+    },
+    "local_model_adaptation": {
+      "pricingMode": "quote",
+      "recommendedRequestType": "model_update",
+      "requiresValidation": true
+    },
+    "multi_instrument_recalibration": {
+      "pricingMode": "quote",
+      "recommendedRequestType": "model_update",
+      "requiresValidation": true
+    },
+    "compatibility_diagnostic": {
+      "pricingMode": "fixed",
+      "amount": 700,
+      "requiresValidation": true,
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      }
+    },
+    "transfer_plan_required": {
+      "pricingMode": "fixed",
+      "amount": 500,
+      "requiresValidation": true,
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      }
+    },
+    "incomplete_transfer_information": {
+      "pricingMode": "quote",
+      "requiresValidation": true
+    }
+  },
+  "discussionRangePolicies": {
+    "default": {
+      "mode": "global_rate",
+      "rate": 0.15
+    },
+    "calibration": {
+      "mode": "global_rate",
+      "rate": 0.15
+    },
+    "prediction": {
+      "mode": "global_rate",
+      "rate": 0.15
+    },
+    "chemometrics_other": {
+      "mode": "global_rate",
+      "rate": 0.15
+    },
+    "none": {
+      "mode": "none",
+      "rate": 0
+    },
+    "maintenance": {
+      "mode": "global_rate",
+      "rate": 0.15
+    }
+  },
+  "internalExports": {
+    "enabled": true,
+    "showInPublicInterface": false,
+    "includePricingAudit": true,
+    "staticAppAccessWarning": "Le masquage d'un bouton dans une application statique ne constitue pas une protection d'accès. Une séparation réelle nécessite deux déploiements ou un service authentifié.",
+    "autoGenerateWithPdf": true,
+    "autoGenerateWithPdfNote": "Mesure transitoire pour usage interne : le XLSX plateau est téléchargé en même temps que le PDF. À désactiver ou déplacer côté serveur avant ouverture publique."
+  },
+  "pricingGovernance": {
+    "sourceOfTruth": "data/tarifs.json",
+    "runtimeGeneratedFile": "assets/js/generated-config.js",
+    "generatorCommand": "python tools/generate-runtime-config.py",
+    "checkCommand": "python tools/generate-runtime-config.py --check",
+    "principle": "Les montants, taux, coefficients et fourchettes modifiables sont définis dans data/tarifs.json ; le calculateur ne doit pas contenir de valeur économique de repli silencieuse.",
+    "mutableParameters": [
+      {
+        "label": "Coefficient laboratoire public",
+        "path": "contexts.public_research_lab.costCoefficient",
+        "current": "1.10"
+      },
+      {
+        "label": "Coefficient sous-traitance",
+        "path": "contexts.subcontracting.costCoefficient",
+        "current": "1.35"
+      },
+      {
+        "label": "Part facturée partenariat",
+        "path": "contexts.partnership.billedShare",
+        "current": "0.50-1.00"
+      },
+      {
+        "label": "Forfaits de gestion",
+        "path": "options.externalAdministrativeFee.contexts",
+        "current": "150/150/150/300 EUR"
+      },
+      {
+        "label": "Urgence",
+        "path": "options.urgent_markup.rate",
+        "current": "0.15"
+      },
+      {
+        "label": "Transport instrument",
+        "path": "options.instrument_transport.amount + instruments.*.transportFee",
+        "current": "150 EUR pour TANGO/LabSpec"
+      },
+      {
+        "label": "Taux personnel plateau",
+        "path": "instrumentCostModelSettings.directStaffHourlyRate",
+        "current": "65 EUR/h"
+      },
+      {
+        "label": "Assistance autonome",
+        "path": "instrumentCostModelSettings.autonomousTechnicalSupportRate",
+        "current": "0.10"
+      },
+      {
+        "label": "Coûts instruments",
+        "path": "instruments.*.costModel",
+        "current": "modèle coût complet par instrument"
+      },
+      {
+        "label": "Formation instrumentale",
+        "path": "instruments.*.prices.initial_training/refresher_training",
+        "current": "150/75 MicroNIR ; 250/125 autres"
+      },
+      {
+        "label": "Calibration",
+        "path": "chemometrics.validated_calibration",
+        "current": "1500/2000/2500 + 300/trait"
+      },
+      {
+        "label": "Préparation des données",
+        "path": "options.chemometric_data_preparation",
+        "current": "200/400/800 EUR"
+      },
+      {
+        "label": "Prédiction",
+        "path": "chemometrics.existing_model_predictions",
+        "current": "formule + ±15 %"
+      },
+      {
+        "label": "Entretien",
+        "path": "maintenancePricing",
+        "current": "montants de référence + ±15 %"
+      }
+    ]
+  },
+  "maintenancePricing": {
+    "performance_audit": {
+      "label": "Auditer les performances",
+      "amount": 1000,
+      "unit": "forfait",
+      "pricingMode": "range",
+      "requiresPlateauReview": true,
+      "pricingConfidence": "low",
+      "partnershipTreatment": "negotiated",
+      "costCategory": "scientific_expertise",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "preQuoteAdjustmentEligible": true
+    },
+    "contextual_validation": {
+      "label": "Valider dans un nouveau contexte",
+      "amount": 1650,
+      "unit": "forfait",
+      "pricingMode": "range",
+      "requiresPlateauReview": true,
+      "pricingConfidence": "low",
+      "partnershipTreatment": "negotiated",
+      "costCategory": "scientific_expertise",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "preQuoteAdjustmentEligible": true
+    },
+    "bias_correction": {
+      "label": "Corriger un biais",
+      "amount": 1000,
+      "unit": "forfait",
+      "pricingMode": "range",
+      "requiresPlateauReview": true,
+      "pricingConfidence": "low",
+      "partnershipTreatment": "negotiated",
+      "costCategory": "scientific_expertise",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "preQuoteAdjustmentEligible": true
+    },
+    "model_update": {
+      "label": "Mettre à jour ou étendre le modèle",
+      "amount": 2500,
+      "unit": "forfait",
+      "pricingMode": "range",
+      "requiresPlateauReview": true,
+      "pricingConfidence": "low",
+      "partnershipTreatment": "negotiated",
+      "costCategory": "scientific_expertise",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "preQuoteAdjustmentEligible": true
+    },
+    "instrument_transfer": {
+      "label": "Transférer vers un autre spectromètre",
+      "amount": 2000,
+      "unit": "forfait",
+      "pricingMode": "range",
+      "requiresPlateauReview": true,
+      "pricingConfidence": "low",
+      "partnershipTreatment": "negotiated",
+      "costCategory": "scientific_expertise",
+      "costSplit": [
+        {
+          "category": "scientific_expertise",
+          "label": "Temps chercheur",
+          "share": 0.5
+        },
+        {
+          "category": "computing_infrastructure",
+          "label": "Infrastructure GPU, maintenance et investissement",
+          "share": 0.5
+        }
+      ],
+      "discussionRangePolicy": {
+        "mode": "global_rate",
+        "rate": 0.15
+      },
+      "preQuoteAdjustmentEligible": true
+    }
+  }
+}

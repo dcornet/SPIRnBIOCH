@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 980 260">
+  <title id="title">Parcours du pré-devis NIRS SPIR</title>
+  <desc id="desc">Quatre étapes : votre demande, composition du pré-devis, configuration des prestations et résumé.</desc>
+  <rect width="980" height="260" rx="24" fill="#f4f8fb"/>
+  <path d="M86 132h808" stroke="#99b7ce" stroke-width="8" stroke-linecap="round"/>
+  <g>
+    <circle cx="120" cy="132" r="48" fill="#0b5d8b"/>
+    <text x="120" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#fff">1</text>
+    <text x="120" y="156" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#fff">Demande</text>
+    <text x="120" y="216" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17324d">Coordonnées</text>
+  </g>
+  <g>
+    <circle cx="366" cy="132" r="48" fill="#167d5b"/>
+    <text x="366" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#fff">2</text>
+    <text x="366" y="156" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#fff">Catalogue</text>
+    <text x="366" y="216" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17324d">Pré-devis</text>
+  </g>
+  <g>
+    <circle cx="612" cy="132" r="48" fill="#6b4ca3"/>
+    <text x="612" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#fff">3</text>
+    <text x="612" y="156" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#fff">Détails</text>
+    <text x="612" y="216" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17324d">Prestations</text>
+  </g>
+  <g>
+    <circle cx="858" cy="132" r="48" fill="#d36b1f"/>
+    <text x="858" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#fff">4</text>
+    <text x="858" y="156" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#fff">Export</text>
+    <text x="858" y="216" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17324d">Résumé</text>
+  </g>
+</svg>

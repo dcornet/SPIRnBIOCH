@@ -1,0 +1,1033 @@
+{
+  "requestTypes": {
+    "spectra_acquisition": {
+      "label": "Prendre des spectres",
+      "definition": "Acquisition de spectres avec un spectromètre du plateau.",
+      "example": "Exemple : réserver un MicroNIR ou envoyer un lot d'échantillons.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "serviceMode",
+          "step": 2,
+          "type": "radio",
+          "label": "Mode de réalisation",
+          "default": "autonomous_supported",
+          "options": [
+            {
+              "value": "autonomous_supported",
+              "label": "Utilisation autonome avec assistance technique du plateau",
+              "subtitle": "Vous réalisez les mesures après formation. Le plateau assure la mise en route, l’appui technique et le contrôle courant du bon déroulement des acquisitions.",
+              "help": "Ce mode convient aux utilisateurs formés qui souhaitent réaliser eux-mêmes les acquisitions. Une formation initiale ou une remise à niveau valide est obligatoire."
+            },
+            {
+              "value": "plateau_operated",
+              "label": "Réalisation des mesures par le plateau",
+              "subtitle": "Le personnel du plateau prend en charge la préparation instrumentale, l’acquisition et le contrôle courant des spectres.",
+              "help": "Aucune formation à l’instrument n’est requise pour le demandeur dans ce mode."
+            }
+          ],
+          "section": "instrument_mode"
+        },
+        {
+          "id": "instrument",
+          "step": 2,
+          "type": "select",
+          "label": "Spectromètre",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "measurementLocation",
+          "step": 2,
+          "type": "radio",
+          "label": "Lieu de réalisation",
+          "default": "bioch_spir_lab",
+          "visibleWhen": {
+            "field": "instrument",
+            "in": [
+              "viavi_micronir",
+              "bruker_tango",
+              "asd_labspec"
+            ]
+          },
+          "options": [
+            {
+              "value": "bioch_spir_lab",
+              "label": "Laboratoire Bioch&SPIR"
+            },
+            {
+              "value": "transport_required",
+              "label": "Utilisation hors laboratoire"
+            }
+          ],
+          "section": "instrument_mode"
+        },
+        {
+          "id": "halfDays",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de demi-journées réservées",
+          "min": 1,
+          "max": 60,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "visibleWhen": {
+            "field": "serviceMode",
+            "in": [
+              "autonomous_supported",
+              "plateau_operated",
+              "self_service",
+              "assisted"
+            ]
+          },
+          "section": "volume"
+        },
+        {
+          "id": "matrixPresentation",
+          "step": 2,
+          "type": "select",
+          "label": "Présentation de la matrice",
+          "source": "matrixPresentations",
+          "default": "powder",
+          "section": "available_data"
+        },
+        {
+          "id": "measurementDevice",
+          "step": 2,
+          "label": "Sonde ou dispositif de mesure",
+          "type": "select",
+          "source": "measurementDevices",
+          "required": true,
+          "section": "available_data"
+        },
+        {
+          "id": "matrixPresentationOther",
+          "step": 2,
+          "type": "text",
+          "label": "Précision sur la matrice",
+          "required": true,
+          "visibleWhen": {
+            "field": "matrixPresentation",
+            "equals": "other"
+          },
+          "section": "available_data"
+        }
+      ],
+      "groupId": "measure",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Choisir un spectromètre et documenter le volume de mesures.",
+      "catalogVisible": false,
+      "configurationOrder": 10
+    },
+    "initial_training": {
+      "label": "Formation à un instrument",
+      "definition": "Apprendre à préparer les mesures, utiliser le spectromètre, contrôler la qualité des spectres et gérer les données produites.",
+      "example": "Exemple : formation initiale au MicroNIR ou remise à niveau au TANGO.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "instrument",
+          "step": 2,
+          "type": "select",
+          "label": "Spectromètre",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "trainingType",
+          "step": 2,
+          "type": "radio",
+          "label": "Type de formation",
+          "default": "initial",
+          "options": [
+            {
+              "value": "initial",
+              "label": "Formation initiale"
+            },
+            {
+              "value": "refresher",
+              "label": "Remise à niveau"
+            }
+          ],
+          "section": "instrument_mode"
+        },
+        {
+          "id": "people",
+          "step": 2,
+          "type": "number",
+          "label": "Participants à former",
+          "min": 1,
+          "max": 20,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "comment",
+          "step": 2,
+          "type": "textarea",
+          "label": "Commentaire facultatif",
+          "required": false,
+          "section": "options"
+        }
+      ],
+      "groupId": "training",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Formation nominative initiale ou remise à niveau sur un spectromètre.",
+      "catalogVisible": false,
+      "configurationOrder": 60
+    },
+    "validated_calibration": {
+      "label": "Calibrer",
+      "definition": "Construire et valider un modèle reliant les spectres à une ou plusieurs valeurs de référence sur une même matrice et une même base de données.",
+      "example": "Exemple : calibrer une propriété de référence sur 180 échantillons.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "properties",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de propriétés ou traits",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "samples",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'échantillons indépendants",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 120,
+          "section": "volume",
+          "help": "Ce nombre pilote la tranche de calibration. Les répétitions spectrales ne sont pas comptées comme des échantillons indépendants."
+        },
+        {
+          "id": "replicates",
+          "step": 2,
+          "type": "number",
+          "label": "Répétitions spectrales par échantillon",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume",
+          "help": "Utilisé pour estimer le volume total de spectres à préparer : échantillons indépendants × répétitions."
+        },
+        {
+          "id": "dataPreparationRequired",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Données à nettoyer ou préparer",
+          "default": false,
+          "section": "available_data",
+          "help": "À sélectionner si les fichiers de spectres, les valeurs de référence ou les identifiants d’échantillons nécessitent une mise en forme, une vérification ou une jointure manuelle avant l’analyse."
+        },
+        {
+          "id": "comment",
+          "step": 2,
+          "type": "textarea",
+          "label": "Commentaire facultatif",
+          "section": "options",
+          "help": "Précisez la matrice, les propriétés, les références disponibles, la structure des fichiers ou les points à discuter avec le plateau."
+        }
+      ],
+      "groupId": "develop_model",
+      "order": 3,
+      "allowMultiple": true,
+      "shortDescription": "Étude préalable, analyse exploratoire, contrôle de cohérence et rapport courant inclus dans le processus.",
+      "catalogVisible": true,
+      "configurationOrder": 20
+    },
+    "local_model_validation": {
+      "label": "Validation locale d'un modèle existant",
+      "definition": "Vérification d'un modèle sur des instruments ou échantillons locaux.",
+      "example": "Exemple : valider un modèle sur 40 échantillons de contrôle.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de modèles",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "instrumentsCount",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'instruments",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "validationSamples",
+          "step": 2,
+          "type": "number",
+          "label": "Échantillons de validation",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 30,
+          "section": "volume"
+        },
+        {
+          "id": "referenceResultsAvailable",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Résultats de référence disponibles",
+          "default": true,
+          "section": "available_data"
+        },
+        {
+          "id": "biasCorrectionPossible",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Correction de biais potentiellement nécessaire",
+          "default": false,
+          "section": "options"
+        }
+      ],
+      "groupId": "use_model",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Vérifier localement un modèle existant.",
+      "catalogVisible": false,
+      "legacy": true,
+      "configurationOrder": 73
+    },
+    "bias_correction": {
+      "label": "Correction de biais ou ajustement saisonnier",
+      "definition": "Ajustement limité quand les prédictions présentent un décalage systématique.",
+      "example": "Exemple : corriger un modèle après une nouvelle saison.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de modèles",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "instrumentsCount",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'instruments",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "controlSamples",
+          "step": 2,
+          "type": "number",
+          "label": "Échantillons de contrôle",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 20,
+          "section": "volume"
+        },
+        {
+          "id": "interventionReason",
+          "step": 2,
+          "type": "select",
+          "label": "Motif de l'intervention",
+          "default": "new_campaign",
+          "options": [
+            {
+              "value": "new_campaign",
+              "label": "Nouvelle campagne"
+            },
+            {
+              "value": "new_season",
+              "label": "Nouvelle saison"
+            },
+            {
+              "value": "new_instrument",
+              "label": "Nouvel instrument"
+            }
+          ],
+          "section": "options"
+        }
+      ],
+      "groupId": "use_model",
+      "order": 2,
+      "allowMultiple": true,
+      "shortDescription": "Corriger un décalage systématique limité.",
+      "catalogVisible": false,
+      "legacy": true,
+      "configurationOrder": 74
+    },
+    "calibration_transfer": {
+      "label": "Transfert de calibration entre instruments",
+      "definition": "Adaptation ou vérification d'un modèle pour un autre instrument.",
+      "example": "Exemple : transférer un modèle d'un TANGO vers un autre instrument.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "sourceInstrument",
+          "step": 2,
+          "type": "select",
+          "label": "Instrument source",
+          "source": "instruments",
+          "default": "bruker_tango",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "targetInstrument",
+          "step": 2,
+          "type": "select",
+          "label": "Instrument cible",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de modèles",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "transferSamples",
+          "step": 2,
+          "type": "number",
+          "label": "Échantillons de transfert",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 30,
+          "section": "volume"
+        },
+        {
+          "id": "instrumentSimilarity",
+          "step": 2,
+          "type": "radio",
+          "label": "Similarité des instruments",
+          "default": "same_model",
+          "options": [
+            {
+              "value": "same_model",
+              "label": "Même modèle"
+            },
+            {
+              "value": "different_technology",
+              "label": "Technologies différentes"
+            }
+          ],
+          "section": "options"
+        }
+      ],
+      "groupId": "use_model",
+      "order": 3,
+      "allowMultiple": true,
+      "shortDescription": "Adapter ou vérifier un modèle sur un autre instrument.",
+      "catalogVisible": false,
+      "legacy": true,
+      "configurationOrder": 75
+    },
+    "existing_model_predictions": {
+      "label": "Prédire",
+      "definition": "Appliquer un modèle existant à de nouveaux spectres et produire les valeurs prédites.",
+      "example": "Exemple : prédire deux propriétés sur 500 spectres.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "instrument",
+          "step": 2,
+          "type": "select",
+          "label": "Spectromètre",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "spectra",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de spectres",
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "default": 100,
+          "section": "volume"
+        },
+        {
+          "id": "models",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de propriétés ou modèles",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "spectraAlreadyAcquired",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Spectres déjà acquis",
+          "default": true,
+          "section": "available_data"
+        },
+        {
+          "id": "dataPreparationRequired",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Préparation et nettoyage des données",
+          "default": false,
+          "section": "options"
+        },
+        {
+          "id": "comment",
+          "step": 2,
+          "type": "textarea",
+          "label": "Informations utiles pour préparer la discussion",
+          "required": true,
+          "minLength": 20,
+          "section": "options",
+          "help": "Précisez le modèle à utiliser, les propriétés attendues, l'origine des spectres, le format des données, les contrôles souhaités et le format de restitution attendu."
+        }
+      ],
+      "groupId": "use_model",
+      "order": 4,
+      "allowMultiple": true,
+      "shortDescription": "Application d’un modèle existant avec contrôle courant inclus.",
+      "catalogVisible": true,
+      "configurationOrder": 30
+    },
+    "model_maintenance": {
+      "label": "Entretenir",
+      "definition": "Auditer, valider, corriger, mettre à jour ou transférer un modèle chimiométrique existant avec une première estimation volontairement large.",
+      "example": "Exemple : expliquer en quelques lignes le modèle concerné, les données disponibles et l’objectif de l’échange avec le plateau.",
+      "pricingHint": "Tarifs indicatifs à confirmer avec le plateau.",
+      "fields": [
+        {
+          "id": "maintenanceType",
+          "step": 2,
+          "type": "select",
+          "label": "Type d'intervention",
+          "default": "performance_audit",
+          "options": [
+            {
+              "value": "performance_audit",
+              "label": "Auditer les performances"
+            },
+            {
+              "value": "contextual_validation",
+              "label": "Valider dans un nouveau contexte"
+            },
+            {
+              "value": "bias_correction",
+              "label": "Corriger un biais"
+            },
+            {
+              "value": "model_update",
+              "label": "Mettre à jour ou étendre le modèle"
+            },
+            {
+              "value": "instrument_transfer",
+              "label": "Transférer vers un autre spectromètre"
+            }
+          ],
+          "section": "instrument_mode",
+          "required": true
+        },
+        {
+          "id": "maintenanceComment",
+          "step": 2,
+          "type": "textarea",
+          "label": "Informations utiles pour préparer la discussion",
+          "section": "options",
+          "help": "Facultatif, mais recommandé pour permettre au plateau de mieux préparer l’échange et d’affiner l’estimation.",
+          "required": false,
+          "maxLength": 2000,
+          "rows": 5
+        }
+      ],
+      "groupId": "maintain",
+      "order": 1,
+      "allowMultiple": true,
+      "shortDescription": "Audit, validation, correction, mise à jour ou transfert de modèle, à préciser avec le plateau.",
+      "catalogVisible": true,
+      "configurationOrder": 40,
+      "maintenanceInterventions": {
+        "performance_audit": {
+          "label": "Auditer les performances",
+          "info": "Vérifier si un modèle existant reste adapté aux données et aux conditions actuelles. L’audit peut mettre en évidence une dérive, une perte de performance ou un besoin de validation, de correction ou de mise à jour, sans modifier automatiquement le modèle.",
+          "usefulInformation": [
+            "nom ou description du modèle",
+            "instrument utilisé",
+            "propriété ou caractère prédit",
+            "période, campagne ou site concerné",
+            "volume approximatif de spectres ou d’échantillons",
+            "valeurs de référence éventuellement disponibles",
+            "anomalie, dérive ou baisse de performance observée",
+            "résultat attendu de l’audit"
+          ],
+          "placeholder": "Exemple : modèle de teneur en matière sèche utilisé sur le TANGO depuis 2024 ; résultats moins stables sur la nouvelle campagne ; environ 300 échantillons et quelques valeurs de laboratoire disponibles."
+        },
+        "contextual_validation": {
+          "label": "Valider dans un nouveau contexte",
+          "info": "Évaluer si un modèle existant conserve des performances satisfaisantes sur une nouvelle population, une nouvelle campagne, un nouveau site, une nouvelle matrice ou de nouvelles conditions de mesure.",
+          "usefulInformation": [
+            "modèle et propriété concernés",
+            "contexte dans lequel le modèle a été développé",
+            "nouveau site, campagne, variété, population ou matrice",
+            "instrument utilisé",
+            "nombre approximatif d’échantillons",
+            "présence de valeurs obtenues par une méthode de référence",
+            "principales différences avec les données d’origine",
+            "utilisation prévue du modèle après validation"
+          ],
+          "placeholder": "Exemple : modèle construit sur la campagne 2024 à Montpellier, à vérifier sur 150 échantillons de la campagne 2026 provenant d’un autre site ; valeurs de référence disponibles pour une partie du lot."
+        },
+        "bias_correction": {
+          "label": "Corriger un biais",
+          "info": "Étudier et, lorsque cela est pertinent, corriger un décalage systématique entre les prédictions du modèle et les valeurs obtenues par la méthode de référence. Si les données ont trop changé, une mise à jour plus complète pourra être recommandée.",
+          "usefulInformation": [
+            "modèle, propriété et instrument concernés",
+            "période ou lot sur lequel le décalage est observé",
+            "sens et importance approximative du décalage",
+            "nombre de prédictions disponibles",
+            "nombre de valeurs de référence correspondantes",
+            "changement récent d’instrument, de matrice ou de protocole",
+            "exemples de résultats considérés comme anormaux"
+          ],
+          "placeholder": "Exemple : les prédictions sont en moyenne supérieures d’environ 1,5 unité aux analyses de laboratoire sur la campagne récente ; 80 couples prédiction-référence sont disponibles."
+        },
+        "model_update": {
+          "label": "Mettre à jour ou étendre le modèle",
+          "info": "Intégrer de nouvelles données dans un modèle existant afin d’étendre son domaine d’utilisation, de couvrir une nouvelle campagne ou population, ou de rétablir ses performances.",
+          "usefulInformation": [
+            "modèle et propriétés concernés",
+            "raison de la mise à jour",
+            "nombre approximatif de nouvelles données",
+            "valeurs de référence disponibles",
+            "matrice et instrument utilisés",
+            "nouvelle campagne, origine ou plage de valeurs",
+            "changements intervenus depuis la calibration initiale",
+            "objectif attendu après mise à jour"
+          ],
+          "placeholder": "Exemple : ajout d’environ 250 échantillons d’une nouvelle origine pour étendre la plage de protéines ; spectres et valeurs de laboratoire disponibles dans deux fichiers distincts."
+        },
+        "instrument_transfer": {
+          "label": "Transférer vers un autre spectromètre",
+          "info": "Étudier l’utilisation d’un modèle existant sur un autre spectromètre. Selon les données disponibles, le travail pourra relever d’un transfert spectral, d’une validation, d’une adaptation locale ou d’une mise à jour du modèle.",
+          "shortHelp": "Les spectres sont parfois notés X. Les valeurs obtenues par la méthode de référence sont parfois notées Y. Pour un même échantillon mesuré sur deux appareils, une seule valeur Y peut généralement être utilisée.",
+          "usefulInformation": [
+            "spectromètre source",
+            "spectromètre cible",
+            "modèle et propriétés concernés",
+            "existence des mêmes échantillons mesurés sur les deux appareils",
+            "nombre approximatif d’échantillons mesurés sur les deux appareils",
+            "valeurs de référence disponibles et volume correspondant",
+            "plages spectrales, accessoires et conditions de mesure",
+            "données déjà acquises ou mesures restant à réaliser",
+            "niveau de validation souhaité"
+          ],
+          "placeholder": "Exemple : transfert d’un modèle développé sur le TANGO vers le MicroNIR ; environ 60 échantillons mesurés sur les deux appareils et 40 valeurs de référence disponibles."
+        }
+      },
+      "maintenanceEstimateNote": "Tarifs indicatifs à confirmer avec le plateau.",
+      "maintenancePartnershipNote": "Une partie des moyens mobilisés pourra être valorisée comme contribution Bioch&SPIR selon le niveau d’implication du plateau."
+    },
+    "instrument_qualification": {
+      "label": "Étalonnage ou qualification instrumentale",
+      "definition": "Vérification du fonctionnement de l'instrument, distincte de la calibration chimiométrique.",
+      "example": "Exemple : qualification d'un spectromètre avant campagne.",
+      "pricingHint": "Sur devis possible",
+      "fields": [
+        {
+          "id": "instrument",
+          "step": 2,
+          "type": "select",
+          "label": "Spectromêtre",
+          "source": "instruments",
+          "default": "viavi_micronir",
+          "section": "instrument_mode"
+        },
+        {
+          "id": "instrumentsCount",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d'instruments",
+          "min": 1,
+          "max": 50,
+          "stepValue": 1,
+          "integer": true,
+          "default": 1,
+          "section": "volume"
+        },
+        {
+          "id": "qualificationType",
+          "step": 2,
+          "type": "select",
+          "label": "Type d'intervention",
+          "default": "qualification",
+          "options": [
+            {
+              "value": "qualification",
+              "label": "Qualification"
+            },
+            {
+              "value": "metrological_check",
+              "label": "Vérification métrologique"
+            },
+            {
+              "value": "adjustment",
+              "label": "Ajustement"
+            }
+          ],
+          "section": "options"
+        },
+        {
+          "id": "interventionLocation",
+          "step": 2,
+          "type": "radio",
+          "label": "Lieu d'intervention",
+          "default": "platform",
+          "options": [
+            {
+              "value": "platform",
+              "label": "Sur le plateau"
+            },
+            {
+              "value": "field",
+              "label": "Sur site"
+            }
+          ],
+          "section": "options"
+        },
+        {
+          "id": "formalReport",
+          "step": 2,
+          "type": "checkbox",
+          "label": "Certificat ou rapport formalisé",
+          "default": true,
+          "section": "options"
+        }
+      ],
+      "groupId": "maintain",
+      "order": 2,
+      "allowMultiple": true,
+      "shortDescription": "Vérifier le fonctionnement instrumental, souvent sur devis.",
+      "catalogVisible": false,
+      "legacy": true,
+      "configurationOrder": 76
+    },
+    "other_chemometrics": {
+      "label": "Autre demande",
+      "definition": "Décrire une demande ne correspondant pas aux prestations proposées.",
+      "example": "Exemple : expertise méthodologique spécifique ou traitement atypique.",
+      "pricingHint": "À discuter avec le plateau",
+      "fields": [
+        {
+          "id": "shortTitle",
+          "step": 2,
+          "type": "text",
+          "label": "Titre court de la demande",
+          "required": true,
+          "section": "instrument_mode"
+        },
+        {
+          "id": "description",
+          "step": 2,
+          "type": "textarea",
+          "label": "Informations utiles pour préparer la discussion",
+          "required": true,
+          "section": "available_data",
+          "minLength": 20,
+          "help": "Décrivez l'objectif, les données disponibles, les instruments, le nombre de spectres et de propriétés, les valeurs de référence, les contraintes et les livrables attendus."
+        },
+        {
+          "id": "deadlineConstraint",
+          "step": 2,
+          "type": "text",
+          "label": "Échéance ou contrainte particulière",
+          "section": "options"
+        }
+      ],
+      "groupId": "chemometrics",
+      "order": 4,
+      "configurationOrder": 50,
+      "catalogVisible": true,
+      "allowMultiple": true,
+      "shortDescription": "Décrire une demande à qualifier avec le plateau."
+    },
+    "theoretical_nirs_training": {
+      "label": "Formation théorique NIRS",
+      "definition": "Comprendre les principes de la spectroscopie proche infrarouge, les conditions d’acquisition, les principales sources de variabilité, la calibration, la validation et les limites d’utilisation des modèles.",
+      "example": "Exemple : session de sensibilisation pour une équipe projet.",
+      "pricingHint": "Estimation possible",
+      "fields": [
+        {
+          "id": "participants",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de participants",
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 8,
+          "section": "volume"
+        },
+        {
+          "id": "levelExpectations",
+          "step": 2,
+          "type": "textarea",
+          "label": "Niveau ou attentes du groupe",
+          "required": false,
+          "section": "options"
+        },
+        {
+          "id": "comment",
+          "step": 2,
+          "type": "textarea",
+          "label": "Commentaire facultatif",
+          "required": false,
+          "section": "options"
+        }
+      ],
+      "groupId": "training",
+      "order": 2,
+      "allowMultiple": true,
+      "shortDescription": "Session collective de théorie NIRS, sans habilitation instrumentale.",
+      "catalogVisible": false,
+      "configurationOrder": 65
+    }
+  },
+  "commonFields": [
+    {
+      "id": "urgent",
+      "step": 1,
+      "type": "checkbox",
+      "label": "Demande urgente",
+      "default": false,
+      "section": "context"
+    },
+    {
+      "id": "context",
+      "step": 1,
+      "type": "radio",
+      "label": "Contexte d'intervention",
+      "source": "contexts",
+      "default": "",
+      "section": "context"
+    }
+  ],
+  "requestGroups": [
+    {
+      "id": "measurement",
+      "label": "Prendre des spectres",
+      "description": "Choisissez l’instrument adapté pour acquérir des spectres sur vos échantillons, au laboratoire ou sur site. Le choix pourra être modifié lors de la configuration.",
+      "order": 10
+    },
+    {
+      "id": "training",
+      "label": "Me former",
+      "order": 30,
+      "description": "Formations théoriques (fonctionnement de la spectroscopie, chimiométrie…) et pratiques (utilisation des instruments, calibration avec nirs4all…) en préparation.",
+      "badge": "Module en préparation",
+      "catalogInfoOnly": true
+    },
+    {
+      "id": "chemometrics",
+      "label": "Chimiométrie",
+      "description": "Construire, appliquer ou maintenir des modèles à partir de spectres et de données de référence.",
+      "order": 20
+    }
+  ],
+  "fieldSections": {
+    "instrument_mode": {
+      "label": "Instrument et mode",
+      "description": "Choix du spectromètre, du mode de réalisation et du lieu."
+    },
+    "volume": {
+      "label": "Volume"
+    },
+    "available_data": {
+      "label": "",
+      "description": ""
+    },
+    "options": {
+      "label": "Options",
+      "description": "Paramètres complémentaires de la prestation."
+    },
+    "context": {
+      "label": "Contexte",
+      "description": "Options globales appliquées au pré-devis complet."
+    }
+  },
+  "catalogCards": [
+    {
+      "id": "spectra_viavi_micronir",
+      "categoryId": "measurement",
+      "requestType": "spectra_acquisition",
+      "presetAnswers": {
+        "instrument": "viavi_micronir"
+      },
+      "label": "VIAVI MicroNIR",
+      "instrumentType": "NIR portable",
+      "description": "Acquérir rapidement des spectres NIR sur des échantillons préparés ou des objets compatibles, au laboratoire ou sur site.",
+      "accent": "measurement",
+      "iconPath": "./assets/icons/micronir.png",
+      "metadataId": "viavi-micronir"
+    },
+    {
+      "id": "spectra_bruker_tango",
+      "categoryId": "measurement",
+      "requestType": "spectra_acquisition",
+      "presetAnswers": {
+        "instrument": "bruker_tango"
+      },
+      "label": "Bruker TANGO",
+      "instrumentType": "FT-NIR de paillasse",
+      "description": "Acquérir des spectres FT-NIR de routine au laboratoire, avec transport possible selon les conditions du projet.",
+      "accent": "measurement",
+      "iconPath": "./assets/icons/tango.png",
+      "metadataId": "bruker-tango"
+    },
+    {
+      "id": "spectra_asd_labspec",
+      "categoryId": "measurement",
+      "requestType": "spectra_acquisition",
+      "presetAnswers": {
+        "instrument": "asd_labspec"
+      },
+      "label": "ASD LabSpec",
+      "instrumentType": "NIR portable avec sonde",
+      "description": "Acquérir des spectres NIR au laboratoire ou sur le terrain, avec une sonde ou une fibre optique.",
+      "accent": "measurement",
+      "iconPath": "./assets/icons/labspec.png",
+      "metadataId": "asd-labspec"
+    },
+    {
+      "id": "spectra_mir_perkin_elmer",
+      "categoryId": "measurement",
+      "requestType": "spectra_acquisition",
+      "presetAnswers": {
+        "instrument": "mir_perkin_elmer"
+      },
+      "label": "MIR PerkinElmer",
+      "instrumentType": "FTIR / moyen infrarouge",
+      "description": "Acquérir des spectres MIR, notamment en ATR, selon la nature et la préparation des échantillons.",
+      "accent": "measurement",
+      "iconPath": "./assets/icons/mir-perkinelmer.png",
+      "metadataId": "mir-perkinelmer"
+    },
+    {
+      "id": "calibrate",
+      "categoryId": "chemometrics",
+      "requestType": "validated_calibration",
+      "label": "Calibrer",
+      "description": "Construire et valider un modèle reliant les spectres à une ou plusieurs propriétés mesurées par une méthode de référence.",
+      "accent": "chemometrics",
+      "instrumentType": "Développer un modèle",
+      "iconPath": "./assets/icons/calibrer.png",
+      "metadataId": "calibrer"
+    },
+    {
+      "id": "predict",
+      "categoryId": "chemometrics",
+      "requestType": "existing_model_predictions",
+      "label": "Prédire",
+      "description": "Utiliser un modèle existant pour produire des valeurs prédites à partir de nouveaux spectres.",
+      "accent": "chemometrics",
+      "instrumentType": "Appliquer un modèle",
+      "iconPath": "./assets/icons/predire.png",
+      "metadataId": "predire"
+    },
+    {
+      "id": "maintain",
+      "categoryId": "chemometrics",
+      "requestType": "model_maintenance",
+      "label": "Entretenir",
+      "description": "Vérifier les performances d’un modèle, corriger un biais, le mettre à jour ou le transférer vers un autre instrument.",
+      "accent": "chemometrics",
+      "instrumentType": "Maintenir un modèle",
+      "iconPath": "./assets/icons/entretenir.png",
+      "metadataId": "entretenir"
+    },
+    {
+      "id": "other_chemometrics",
+      "categoryId": "chemometrics",
+      "requestType": "other_chemometrics",
+      "label": "Autre demande",
+      "description": "Décrire un besoin qui ne correspond pas aux prestations proposées. Le périmètre et le coût seront définis avec le plateau.",
+      "accent": "other",
+      "instrumentType": "Prestation chimiométrique sur mesure",
+      "iconPath": "./assets/icons/autre.png",
+      "metadataId": "autre-demande"
+    },
+    {
+      "id": "training_instrument",
+      "categoryId": "training",
+      "requestType": "initial_training",
+      "label": "Formation à un instrument",
+      "instrumentType": "Formation nominative",
+      "description": "Apprendre à préparer les mesures, utiliser le spectromètre, contrôler la qualité des spectres et gérer les données produites.",
+      "accent": "training",
+      "iconPath": "./assets/icons/formation.png",
+      "metadataId": "me-former",
+      "catalogVisible": false
+    },
+    {
+      "id": "training_theoretical_nirs",
+      "categoryId": "training",
+      "requestType": "theoretical_nirs_training",
+      "label": "Formation théorique NIRS",
+      "instrumentType": "Session collective",
+      "description": "Comprendre les principes de la NIRS, la variabilité, la calibration, la validation et les limites des modèles.",
+      "accent": "training",
+      "iconPath": "./assets/icons/formation.png",
+      "metadataId": "me-former",
+      "catalogVisible": false
+    }
+  ]
+}

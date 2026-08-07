@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title desc">
+  <title>Autre demande chimiométrique</title>
+  <desc>Icône représentant une demande particulière à préciser avec le plateau.</desc>
+  <circle cx="32" cy="28" r="20"/>
+<path d="M24 22c1-5 5-8 10-8 6 0 10 4 10 9 0 8-10 8-10 15"/>
+<circle cx="34" cy="45" r="1.8" fill="currentColor" stroke="none"/>
+<path d="M18 51l-7 7 3-12"/>
+</svg>

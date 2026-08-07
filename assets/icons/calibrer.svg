@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title desc">
+  <title>Calibrer</title>
+  <desc>Icône représentant la construction et la validation d’un modèle de calibration.</desc>
+  <path d="M10 52V12M10 52h44"/>
+<circle cx="18" cy="43" r="2.5"/>
+<circle cx="25" cy="36" r="2.5"/>
+<circle cx="33" cy="32" r="2.5"/>
+<circle cx="41" cy="24" r="2.5"/>
+<circle cx="49" cy="19" r="2.5"/>
+<path d="M16 45c10-8 18-11 35-29"/>
+<path d="M43 16h8v8"/>
+</svg>

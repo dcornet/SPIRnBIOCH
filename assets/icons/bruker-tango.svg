@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title desc">
+  <title>Bruker TANGO</title>
+  <desc>Icône d’un spectromètre FT-NIR de paillasse.</desc>
+  <rect x="10" y="14" width="44" height="36" rx="5"/>
+<rect x="16" y="20" width="19" height="14" rx="2"/>
+<path d="M20 27h11M20 31h7"/>
+<circle cx="45" cy="27" r="5"/>
+<path d="M15 43h34M22 50v4M42 50v4"/>
+<path d="M40 40h10"/>
+</svg>

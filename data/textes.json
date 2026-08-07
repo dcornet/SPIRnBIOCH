@@ -1,0 +1,99 @@
+{
+  "app": {
+    "title": "Pré-devis NIRS / SPIR",
+    "subtitle": "Estimez le coût de votre demande avant échange avec le plateau.",
+    "notice": "Ce pré-devis est indicatif, hors taxes et non contractuel. Il doit être validé et discuté avec le plateau avant tout engagement ; un devis définitif sera établi après examen des échantillons, des objectifs et des données disponibles.",
+    "contactEmail": ""
+  },
+  "steps": [
+    "Votre demande",
+    "Composer le pré-devis",
+    "Configurer les prestations",
+    "Résumé"
+  ],
+  "educational": {
+    "chemometric_calibration": {
+      "title": "Calibration chimiométrique",
+      "text": "Construction d'un modèle reliant les spectres à des valeurs obtenues par une méthode de référence."
+    },
+    "validation": {
+      "title": "Validation",
+      "text": "Vérification des performances du modèle sur des échantillons qui n'ont pas servi directement à sa construction."
+    },
+    "prediction": {
+      "title": "Prédiction",
+      "text": "Application d'un modèle existant à de nouveaux spectres. La validité dépend du domaine couvert par la calibration."
+    },
+    "maintenance": {
+      "title": "Maintenance",
+      "text": "Contrôle périodique du modèle et mise à jour lorsque les produits, saisons, instruments ou conditions de mesure évoluent."
+    },
+    "bias_correction": {
+      "title": "Correction de biais",
+      "text": "Ajustement limité d'un modèle existant lorsque les prédictions présentent un décalage systématique."
+    },
+    "calibration_transfer": {
+      "title": "Transfert de calibration",
+      "text": "Adaptation ou vérification d'un modèle afin qu'il puisse être utilisé sur un autre instrument."
+    },
+    "instrument_qualification": {
+      "title": "Étalonnage instrumental",
+      "text": "Vérification ou ajustement métrologique de l'instrument. Cette opération est différente de la calibration chimiométrique."
+    }
+  },
+  "result": {
+    "nextStep": "Transmettre ces éléments au plateau pour discuter et valider le périmètre scientifique, les échantillons, les données disponibles, le délai et le devis définitif."
+  },
+  "provider": {
+    "name": "Plateau Bioch&Spir",
+    "organization": "CIRAD",
+    "addressLine1": "TA A-108/01",
+    "addressLine2": "Avenue Agropolis",
+    "postalCode": "34398",
+    "city": "Montpellier Cedex 5",
+    "country": "France",
+    "siret": "331 596 270 00016",
+    "vatNumber": "FR 84 331 596 270",
+    "administrativeContact": {
+      "name": "Cindy Herbaut",
+      "email": "cindy.herbaut@cirad.fr",
+      "phone": "04 67 61 75 05"
+    },
+    "platformReferent": {
+      "name": ""
+    }
+  },
+  "pdf": {
+    "quoteValidityDays": 45,
+    "vatNote": "L'ajout éventuel de la TVA dépend du statut du demandeur et des règles applicables.",
+    "administrativeFeeNote": "Il couvre la préparation administrative, la coordination, la facturation et le suivi du dossier.",
+    "conditions": "Un bon de commande ou un document contractuel devra être communiqué avant le démarrage des prestations lorsque les règles du projet l'exigent.",
+    "calibrationNote": {
+      "title": "Calibration chimiométrique",
+      "paragraphs": [
+        "La prestation couvre l'audit et la structuration des données, depuis la vérification de l'intégrité des fichiers et de la correspondance entre spectres, références et métadonnées jusqu'à l'analyse des structures expérimentales - site, année, variété, campagne, matrice ou instrument. Elle comprend un diagnostic de qualité à l'échelle de la base, de l'échantillon et du spectre : rapport signal/bruit, dérives, valeurs atypiques, répétitions spectrales anormales et zones non exploitables. Les partitions d'apprentissage, de validation et de test ainsi que les validations croisées sont construites en tenant compte des groupes biologiques et techniques afin d'éviter toute fuite d'information.",
+        "Les pipelines sont développés avec l'écosystème open source nirs4all (https://nirs4all.org/ ; https://github.com/GBeurier/nirs4all), qui assure la traçabilité des données, partitions, prétraitements, paramètres, modèles et résultats, ainsi que la reproductibilité et la portabilité des méthodes vers plusieurs environnements de calcul. La recherche compare et optimise trois familles complémentaires - AOM-PLS (https://arxiv.org/abs/2605.13587), CatBoost et TabPFN appliqué à la NIRS (https://arxiv.org/abs/2605.21544) - en explorant les prétraitements et hyperparamètres sans utiliser les données de test.",
+        "La stabilité du pipeline et des hyperparamètres est évaluée sur plusieurs graines aléatoires, puis le modèle retenu est réajusté sur les données de calibration autorisées. Les performances sont restituées au moyen de métriques adaptées à la régression ou à la classification, complétées par une analyse bootstrap pour évaluer leur sensibilité à l'échantillonnage. Le rapport final documente la robustesse, le domaine d'applicabilité, les valeurs extrêmes, l'extrapolation et, lorsque les données le permettent, l'incertitude des prédictions par méthodes de prédiction conformelle. Des outils complémentaires peuvent être mobilisés pour contrôler les formats et la provenance des fichiers (https://formats.nirs4all.org/) ou consulter les méthodes portables (https://methods.nirs4all.org/)."
+      ]
+    },
+    "commonClauses": [
+      "Ce pré-devis est indicatif, hors taxes et non contractuel ; il doit être validé et discuté avec le plateau avant tout engagement.",
+      "Le plateau est soumis à une obligation de moyens.",
+      "La réalisation dépend de la disponibilité des équipements et du personnel.",
+      "Les délais et résultats dépendent de la qualité, de la nature et de l'état des échantillons transmis.",
+      "Les performances chimiométriques dépendent de la qualité des données de référence et du domaine de validité des calibrations.",
+      "Aucune performance prédéterminée n'est garantie avant revue scientifique et technique.",
+      "Les délais définitifs seront confirmés après validation du périmètre de la demande."
+    ],
+    "partnershipClauses": [
+      "La valeur des moyens mobilisés peut différer de la part facturée au projet. Les formations, le personnel instrumental et une part des autres coûts éligibles peuvent constituer une contribution Bioch&SPIR."
+    ],
+    "internalClauses": [],
+    "subcontractingClauses": [
+      "Pour une sous-traitance, le montant présenté tient compte des responsabilités contractuelles, des aléas d'exécution et de la réalisation selon le périmètre validé avec le plateau."
+    ],
+    "publicResearchLabClauses": [
+      "Le tarif « laboratoire public de recherche » s’applique aux unités publiques extérieures à l’UMR AGAP Institut lorsqu’aucune contribution scientifique ou technique de type partenarial n’a été convenue."
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title desc">
+  <title>VIAVI MicroNIR</title>
+  <desc>Icône d’un spectromètre NIR portable tenu à la main.</desc>
+  <rect x="13" y="22" width="36" height="20" rx="6"/>
+<path d="M49 27h4a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4h-4"/>
+<circle cx="22" cy="32" r="4"/>
+<path d="M30 28h11M30 32h8M30 36h11"/>
+<path d="M18 42v6M44 42v6M15 48h32"/>
+</svg>

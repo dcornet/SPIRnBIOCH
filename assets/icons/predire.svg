@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title desc">
+  <title>Prédire</title>
+  <desc>Icône représentant l’application d’un modèle à de nouveaux spectres.</desc>
+  <path d="M9 48V16M9 48h28"/>
+<path d="M14 42c6-12 9-8 14-19 4-8 7-7 11-11"/>
+<path d="M34 12h6v6"/>
+<path d="M41 32h14v16H41z"/>
+<path d="M45 37h6M45 41h6M45 45h4"/>
+<path d="M35 39h6"/>
+<path d="M37 36l4 3-4 3"/>
+</svg>

@@ -1,0 +1,10 @@
+.DS_Store
+Thumbs.db
+node_modules/
+coverage/
+test-results*/
+*.log
+playwright-*.json
+dist/
+.env
+.data/
