@@ -1,0 +1,129 @@
+LICENCE D’USAGE INTERNE ET EXPÉRIMENTAL
+Projet : biochNspir_spir_devis
+Version : 1.0
+Date : 2026
+
+Copyright © 2026 UMR AGAP / CIRAD.
+Tous droits réservés.
+
+1. Objet
+
+Le présent logiciel est un outil expérimental destiné à un usage interne au sein de l’UMR AGAP, du CIRAD, ainsi qu’à des partenaires expressément autorisés dans le cadre de collaborations scientifiques, techniques ou institutionnelles.
+
+Il permet de produire des estimations indicatives de prestations liées à la spectroscopie NIRS/SPIR, notamment pour l’acquisition de spectres, la formation, la chimiométrie, la calibration, la validation, la prédiction, la maintenance de modèles et les prestations associées.
+
+2. Nature expérimentale
+
+Le logiciel est fourni à titre expérimental, en cours de développement et d’évaluation.
+
+Les estimations générées :
+
+- sont indicatives ;
+- sont exprimées hors taxes sauf mention contraire ;
+- ne constituent ni un devis contractuel, ni une offre commerciale ferme ;
+- doivent être confirmées après examen scientifique, technique, administratif et contractuel par le plateau concerné ;
+- peuvent évoluer en fonction des règles tarifaires, des moyens disponibles, des échantillons, des données de référence, des délais et du contexte du projet.
+
+3. Autorisations d’utilisation
+
+Sous réserve du respect de la présente licence, l’utilisation du logiciel est autorisée :
+
+- aux personnels de l’UMR AGAP et du CIRAD ;
+- aux personnels des établissements tutelles ou partenaires autorisés ;
+- aux collaborateurs et prestataires expressément habilités pour les besoins du projet ;
+- uniquement à des fins internes, scientifiques, techniques, administratives, de démonstration ou d’évaluation.
+
+4. Restrictions
+
+Sans autorisation écrite préalable du titulaire des droits, il est interdit :
+
+- de publier, distribuer, céder, vendre ou sous-licencier le logiciel ;
+- de rendre le code source ou une instance fonctionnelle accessible au public ;
+- d’utiliser le logiciel à des fins commerciales externes ;
+- de supprimer les mentions de propriété, d’origine ou de caractère expérimental ;
+- de présenter les résultats générés comme des engagements contractuels du CIRAD, de l’UMR AGAP ou de leurs partenaires ;
+- d’intégrer le logiciel dans un service tiers diffusé publiquement ;
+- de transmettre des données confidentielles, sensibles ou à caractère personnel sans dispositif de sécurité et validation institutionnelle appropriés.
+
+5. Modifications
+
+Les utilisateurs autorisés peuvent modifier le logiciel pour les besoins internes du projet.
+
+Toute modification significative doit :
+
+- préserver la mention du caractère expérimental ;
+- conserver la traçabilité des versions ;
+- documenter les changements de règles tarifaires ou de calcul ;
+- faire l’objet d’une validation avant utilisation opérationnelle ;
+- respecter les règles applicables en matière de sécurité, de confidentialité et de protection des données.
+
+6. Données et confidentialité
+
+Le logiciel ne doit pas être utilisé pour stocker ou transmettre des données confidentielles, sensibles ou réglementées sans validation préalable des responsables compétents.
+
+Les brouillons, exports JSON, PDF et autres fichiers générés doivent être conservés et transmis conformément aux règles institutionnelles applicables.
+
+Aucune fonctionnalité de transmission automatique ne doit être activée sans validation technique, juridique, de sécurité et de protection des données.
+
+7. Absence de garantie
+
+Le logiciel est fourni « en l’état », sans garantie expresse ou implicite.
+
+Le titulaire des droits ne garantit notamment pas :
+
+- l’absence d’erreurs ;
+- la disponibilité continue du logiciel ;
+- l’exactitude permanente des tarifs ;
+- l’adéquation du logiciel à un besoin particulier ;
+- l’obtention d’un résultat scientifique, technique ou économique déterminé ;
+- la réussite d’une calibration, d’une validation, d’un transfert de modèle ou d’une prédiction.
+
+Le plateau s’engage, dans le cadre des prestations effectivement contractualisées, à une obligation de moyens définie dans le devis ou la convention applicable, et non à une obligation générale de résultat.
+
+8. Responsabilité
+
+Dans les limites autorisées par la loi, le titulaire des droits ne pourra être tenu responsable des conséquences résultant :
+
+- d’une utilisation non autorisée ;
+- d’une mauvaise interprétation d’une estimation ;
+- de l’utilisation d’une version obsolète de la grille tarifaire ;
+- de données d’entrée incorrectes ou incomplètes ;
+- de décisions prises sur la seule base du pré-devis ;
+- de pertes de données locales ;
+- d’une publication ou d’une transmission non autorisée.
+
+9. Devis et engagements contractuels
+
+Seuls les devis, conventions, contrats ou bons de commande formellement validés par les personnes habilitées engagent les institutions concernées.
+
+Le logiciel ne peut pas, à lui seul, créer une obligation contractuelle.
+
+10. Composants tiers
+
+Les bibliothèques, polices, logos et autres composants tiers restent soumis à leurs licences et conditions propres.
+
+La présente licence ne modifie pas les droits attachés à ces composants.
+
+11. Durée et retrait de l’autorisation
+
+L’autorisation d’utilisation peut être suspendue ou retirée à tout moment en cas :
+
+- de non-respect de la présente licence ;
+- de risque de sécurité ou de confidentialité ;
+- d’utilisation incompatible avec les objectifs du projet ;
+- de décision institutionnelle.
+
+12. Droit applicable
+
+La présente licence est soumise au droit français.
+
+Toute question relative à l’utilisation, à la diffusion ou à la modification du logiciel doit être soumise au responsable du projet et, lorsque nécessaire, aux services juridiques, informatiques ou de protection des données compétents.
+
+13. Contact
+
+Responsable du projet : [à compléter]
+Adresse de contact : [à compléter]
+
+IMPORTANT
+
+Cette licence constitue une proposition de cadre d’usage interne. Avant diffusion institutionnelle ou mise à disposition de partenaires externes, le titulaire exact des droits, les établissements concernés et les clauses juridiques doivent être confirmés par les services compétents.
