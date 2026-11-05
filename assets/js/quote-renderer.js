@@ -13,6 +13,7 @@
   }
 
   function itemAmount(item, currency) {
+    if (item.billingRangeReview?.required) return "À confirmer avec le plateau";
     if (item.pricingMode === "quote") return "Sur devis";
     if (item.offeredByPlatform) return "Offert";
     if (displayTotalMin(item) === displayTotalMax(item)) return NIRSApp.money(displayTotalMin(item), currency);
@@ -55,7 +56,8 @@
     const help = item.configRule === "externalAdministrativeFee" && item.helpText && NIRSApp.tooltipHtml
       ? NIRSApp.tooltipHtml("administrative-fee-help", item.helpText, "Que couvre le forfait de gestion ?")
       : "";
-    return `${item.label}${item.trainingDetails ? ` - ${item.trainingDetails}` : ""}${help}`;
+    const referenceDetails = item.configRule === "predictionReferenceAnalyses" ? `<br><small>${NIRSApp.escapeHtml(item.reason)}</small>` : "";
+    return `${escapeHtml(item.label)}${item.trainingDetails ? ` - ${escapeHtml(item.trainingDetails)}` : ""}${help}${referenceDetails}`;
   }
 
   function orderedResultItems(result) {
@@ -142,6 +144,10 @@
       lines.push("", "Mentions et exclusions :");
       result.exclusions.forEach((item) => lines.push(`- ${item}`));
     }
+    if (result.warnings.length) {
+      lines.push("", "Avertissements :");
+      result.warnings.forEach((warning) => lines.push(`- ${warning}`));
+    }
     return lines.join("\n");
   }
 
@@ -171,18 +177,20 @@
       },
       totals: {
         technicalValue,
-        billedEstimate: result.billedEstimate,
+        billedEstimate: result.billingRangeReview?.required ? null : result.billedEstimate,
         inKindContribution: result.inKindContribution,
         currency: result.currency,
         taxMode: result.taxMode
       },
       clientPricing: {
+        requiresPlateauReview: result.billingRangeReview?.required === true,
+        reviewMessage: result.billingRangeReview?.required ? result.billingRangeReview.message : "",
         context: result.context ? {
           id: result.context.id,
           label: result.context.label,
           requiresDiscussion: result.context.requiresDiscussion === true
         } : null,
-        billedEstimate: result.billedEstimate,
+        billedEstimate: result.billingRangeReview?.required ? null : result.billedEstimate,
         administrativeFee: administrativeFeeRange(result),
         status: result.status,
         quoteRequiredItems: (result.items || []).filter((item) => item.pricingMode === "quote").map((item) => ({
@@ -193,6 +201,7 @@
         }))
       },
       platformPricingAudit: result.pricingAudit || null,
+      billingRangeReview: result.billingRangeReview || null,
       partnershipBreakdown: result.partnershipBreakdown || null,
       configuredItems: (state.items || []).map((item) => exportConfiguredItem(item)),
       items: result.items || [],
@@ -261,7 +270,7 @@
           <div>
             <p class="eyebrow">${statusLabel(result.status)}</p>
             <h2 id="quote-title">Résumé</h2>
-            <p>${project.title || "Demande à compléter"} - ${contextLabel}${contextDisplay ? ` - ${contextDisplay}` : ""}</p>
+            <p>${escapeHtml(project.title || "Demande à compléter")} - ${escapeHtml(contextLabel)}${contextDisplay ? ` - ${escapeHtml(contextDisplay)}` : ""}</p>
             <p class="notice-inline">Ce pré-devis est indicatif et doit être validé et discuté avec le plateau avant tout engagement.</p>
           </div>
           <div class="quote-total">
@@ -275,12 +284,12 @@
         <section class="request-recap" aria-labelledby="request-recap-title">
           <h3 id="request-recap-title">Demande et coordonnées</h3>
           <dl>
-            <div><dt>Demandeur</dt><dd>${[requester.firstName, requester.lastName].filter(Boolean).join(" ") || "À compléter"}</dd></div>
-            <div><dt>Courriel</dt><dd>${requester.email || "À compléter"}</dd></div>
-            <div><dt>Structure</dt><dd>${[requester.organization, requester.unit].filter(Boolean).join(" - ") || "À compléter"}</dd></div>
-            <div><dt>Période</dt><dd>${project.plannedStartDate || "À compléter"} - ${project.plannedEndDate || "À compléter"}</dd></div>
+            <div><dt>Demandeur</dt><dd>${escapeHtml([requester.firstName, requester.lastName].filter(Boolean).join(" ") || "À compléter")}</dd></div>
+            <div><dt>Courriel</dt><dd>${escapeHtml(requester.email || "À compléter")}</dd></div>
+            <div><dt>Structure</dt><dd>${escapeHtml([requester.organization, requester.unit].filter(Boolean).join(" - ") || "À compléter")}</dd></div>
+            <div><dt>Période</dt><dd>${escapeHtml(project.plannedStartDate || "À compléter")} - ${escapeHtml(project.plannedEndDate || "À compléter")}</dd></div>
             <div><dt>Urgence</dt><dd>${state.urgent ? `Oui (${state.urgentSource === "automatic" ? "automatique" : "manuelle"})` : "Non"}</dd></div>
-            ${result.context?.id === "partnership" ? `<div><dt>Projet de partenariat</dt><dd>${project.partnershipProjectName || "À compléter"}</dd></div>` : ""}
+            ${result.context?.id === "partnership" ? `<div><dt>Projet de partenariat</dt><dd>${escapeHtml(project.partnershipProjectName || "À compléter")}</dd></div>` : ""}
           </dl>
         </section>
 
@@ -310,8 +319,8 @@
             <tbody>
               ${groupedResultItems(result).map((item) => `
                 <tr>
-                  <td>${item.parentLabel || "Global"}</td>
-                  <td>${lineLabelHtml(item)}${item.contextNote ? `<br><small>${item.contextNote}</small>` : ""}</td>
+                  <td>${escapeHtml(item.parentLabel || "Global")}</td>
+                  <td>${lineLabelHtml(item)}${item.contextNote ? `<br><small>${escapeHtml(item.contextNote)}</small>` : ""}</td>
                   <td>${itemAmount(item, result.currency)}</td>
                 </tr>
               `).join("")}
@@ -320,11 +329,12 @@
         </div>
 
         ${quoteLines.length ? renderQuoteRequired(quoteLines) : ""}
+        <p class="notice-inline">${NIRSApp.escapeHtml(config.textes.pdf.estimateRangeNote)}</p>
         ${renderList("Hypothèses", result.assumptions)}
         ${renderList("Avertissements", result.warnings, "warning-list")}
         ${renderList("Mentions et exclusions", result.exclusions)}
 
-        <p class="next-step"><strong>Prochaine étape :</strong> ${config.textes.result.nextStep}</p>
+        <p class="next-step"><strong>Prochaine étape :</strong> ${escapeHtml(config.textes.result.nextStep)}</p>
 
         <div class="actions">
           <button type="button" class="button-danger" data-action="reset">Réinitialiser</button>
@@ -385,8 +395,8 @@
     return `
       <section class="quote-list partnership-breakdown">
         <h3>Répartition partenariale indicative</h3>
-        <p class="partnership-payable-note">La fourchette tient compte à la fois des caractéristiques concrètes du travail et du niveau d'implication envisagé de Bioch&amp;SPIR. La répartition définitive sera arrêtée avec le plateau après discussion du projet.</p>
-        <dl>${rows.map(([label, range]) => `<div><dt>${label}</dt><dd>${NIRSApp.rangeMoney(range, result.currency)} ${result.taxMode}</dd></div>`).join("")}</dl>
+        <p class="partnership-payable-note">La fourchette reflète les caractéristiques concrètes du travail. Les personnels et formations apportés par Bioch&amp;SPIR ne sont pas facturés. Le montant exact sera discuté avec le plateau avant établissement du devis définitif.</p>
+        <dl>${rows.map(([label, range]) => `<div><dt>${label}</dt><dd>${label === "Part facturée indicative" && result.billingRangeReview?.required ? "Sur devis" : `${NIRSApp.rangeMoney(range, result.currency)} ${result.taxMode}`}</dd></div>`).join("")}</dl>
         <p class="notice-inline">Les apports Bioch&amp;SPIR ne sont pas ajoutés au montant à payer.</p>
       </section>
     `;
@@ -406,10 +416,10 @@
     return `
       <article class="item-summary ${item.status === "incomplete" ? "is-incomplete" : ""}">
         <div>
-          <h4>${index + 1}. ${item.label}</h4>
-          <p>${item.summary || statusLabel(item.status)}</p>
+          <h4>${index + 1}. ${escapeHtml(item.label)}</h4>
+          <p>${escapeHtml(item.summary || statusLabel(item.status))}</p>
           ${maintenance}
-          ${item.contextNote ? `<p>${item.contextNote}</p>` : ""}
+          ${item.contextNote ? `<p>${escapeHtml(item.contextNote)}</p>` : ""}
           ${capacity}
         </div>
         <strong>${amount}</strong>
@@ -427,6 +437,7 @@
   }
 
   function itemSummaryAmount(item, currency, taxMode) {
+    if (item.billingRangeReview?.required) return "Sur devis";
     if (item.status === "incomplete") return "À discuter";
     if (isQuoteOnlyItem(item)) return "Sur devis";
     if (item.offeredByPlatform) {
@@ -437,6 +448,7 @@
   }
 
   function summaryAmountText(item, currency, taxMode) {
+    if (item.billingRangeReview?.required) return "Sur devis";
     if (item.status === "incomplete") return "À discuter";
     if (isQuoteOnlyItem(item)) return "Sur devis";
     if (!item.billedEstimate) return "À discuter";
@@ -465,7 +477,7 @@
     return `
       <section class="quote-list warning-list">
         <h3>Éléments restant à chiffrer par le plateau</h3>
-        <ul>${items.map((item) => `<li>${item.parentLabel ? `${item.parentLabel} : ` : ""}${item.label}</li>`).join("")}</ul>
+        <ul>${items.map((item) => `<li>${item.parentLabel ? `${escapeHtml(item.parentLabel)} : ` : ""}${escapeHtml(item.label)}</li>`).join("")}</ul>
       </section>
     `;
   }
@@ -475,7 +487,7 @@
     return `
       <section class="quote-list ${className}">
         <h3>${title}</h3>
-        <ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>
+        <ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       </section>
     `;
   }

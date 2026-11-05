@@ -3,8 +3,9 @@ import { pathToFileURL } from "node:url";
 import path from "node:path";
 
 const port = Number(process.env.PLAYWRIGHT_PORT || 8768);
-const httpUrl = `http://127.0.0.1:${port}/index.html`;
-const fileUrl = pathToFileURL(path.resolve("index.html")).href;
+const entry = process.env.PLAYWRIGHT_ENTRY || "index.html";
+const httpUrl = new URL(entry, `http://127.0.0.1:${port}/`).href;
+const fileUrl = pathToFileURL(path.resolve(entry)).href;
 
 export default defineConfig({
   testDir: "./e2e",

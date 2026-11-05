@@ -68,6 +68,7 @@
           "step": 2,
           "type": "number",
           "label": "Nombre de demi-journées réservées",
+          "required": true,
           "min": 1,
           "max": 60,
           "stepValue": 1,
@@ -83,6 +84,31 @@
             ]
           },
           "section": "volume"
+        },
+        {
+          "id": "samples",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre estimé d’échantillons indépendants",
+          "required": true,
+          "min": 1,
+          "stepValue": 1,
+          "integer": true,
+          "section": "volume",
+          "help": "Information destinée à la validation du pré-devis par le plateau, sans incidence sur la tarification à la demi-journée."
+        },
+        {
+          "id": "replicates",
+          "step": 2,
+          "type": "number",
+          "label": "Répétitions spectrales par échantillon",
+          "required": false,
+          "min": 1,
+          "stepValue": 1,
+          "integer": true,
+          "default": 2,
+          "section": "volume",
+          "help": "Facultatif, deux répétitions proposées par défaut. Cette information ne modifie pas le tarif."
         },
         {
           "id": "matrixPresentation",
@@ -474,6 +500,19 @@
       "pricingHint": "Estimation possible",
       "fields": [
         {
+          "id": "predictionMode",
+          "step": 2,
+          "type": "radio",
+          "label": "Vérification des prédictions",
+          "required": true,
+          "default": "without_reference",
+          "options": [
+            { "value": "without_reference", "label": "Prédiction sans analyses de référence" },
+            { "value": "with_reference", "label": "Prédiction avec analyses de référence" }
+          ],
+          "section": "instrument_mode"
+        },
+        {
           "id": "instrument",
           "step": 2,
           "type": "select",
@@ -487,6 +526,7 @@
           "step": 2,
           "type": "number",
           "label": "Nombre de spectres",
+          "required": true,
           "min": 1,
           "max": 100000,
           "stepValue": 1,
@@ -499,12 +539,42 @@
           "step": 2,
           "type": "number",
           "label": "Nombre de propriétés ou modèles",
+          "required": true,
           "min": 1,
           "max": 100,
           "stepValue": 1,
           "integer": true,
           "default": 1,
           "section": "volume"
+        },
+        {
+          "id": "samples",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre d’échantillons indépendants à prédire",
+          "required": true,
+          "min": 1,
+          "max": 100000,
+          "stepValue": 1,
+          "integer": true,
+          "visibleWhen": { "field": "predictionMode", "equals": "with_reference" },
+          "section": "volume",
+          "help": "Les analyses de chimie humide portent sur les échantillons indépendants, sans compter plusieurs fois les répétitions spectrales."
+        },
+        {
+          "id": "referenceProperties",
+          "step": 2,
+          "type": "checkboxList",
+          "label": "Propriétés à vérifier par chimie humide",
+          "required": true,
+          "options": [
+            { "value": "starch", "label": "Amidon" },
+            { "value": "protein", "label": "Protéines" },
+            { "value": "other", "label": "Autre propriété, sur devis" }
+          ],
+          "visibleWhen": { "field": "predictionMode", "equals": "with_reference" },
+          "section": "available_data",
+          "help": "Les analyses sont facturées par échantillon et par propriété sélectionnée. Précisez les autres propriétés dans le commentaire."
         },
         {
           "id": "spectraAlreadyAcquired",
@@ -541,8 +611,8 @@
       "configurationOrder": 30
     },
     "model_maintenance": {
-      "label": "Entretenir",
-      "definition": "Auditer, valider, corriger, mettre à jour ou transférer un modèle chimiométrique existant avec une première estimation volontairement large.",
+      "label": "Vérifier et adapter un modèle",
+      "definition": "Vérifier qu’un modèle chimiométrique est adapté à vos échantillons et à votre usage, puis le valider, le corriger, le mettre à jour ou le transférer si nécessaire.",
       "example": "Exemple : expliquer en quelques lignes le modèle concerné, les données disponibles et l’objectif de l’échange avec le plateau.",
       "pricingHint": "Tarifs indicatifs à confirmer avec le plateau.",
       "fields": [
@@ -879,7 +949,7 @@
     {
       "id": "chemometrics",
       "label": "Chimiométrie",
-      "description": "Construire, appliquer ou maintenir des modèles à partir de spectres et de données de référence.",
+      "description": "Construire des modèles, prédire des propriétés et vérifier l’adéquation des modèles à vos échantillons.",
       "order": 20
     }
   ],
@@ -942,7 +1012,7 @@
       },
       "label": "ASD LabSpec",
       "instrumentType": "NIR portable avec sonde",
-      "description": "Acquérir des spectres NIR au laboratoire ou sur le terrain, avec une sonde ou une fibre optique.",
+      "description": "Acquérir des spectres NIR avec une sonde de contact de 2 cm, une pince à feuille ou une microsonde de 0,3 cm.",
       "accent": "measurement",
       "iconPath": "./assets/icons/labspec.png",
       "metadataId": "asd-labspec"
@@ -976,10 +1046,25 @@
       "id": "predict",
       "categoryId": "chemometrics",
       "requestType": "existing_model_predictions",
-      "label": "Prédire",
-      "description": "Utiliser un modèle existant pour produire des valeurs prédites à partir de nouveaux spectres.",
+      "presetAnswers": { "predictionMode": "without_reference" },
+      "preferCardText": true,
+      "label": "Prédire sans analyses de référence",
+      "description": "Utiliser un modèle existant avec examen de conformité des spectres, sans vérification expérimentale des valeurs prédites sur le lot.",
       "accent": "chemometrics",
       "instrumentType": "Appliquer un modèle",
+      "iconPath": "./assets/icons/predire.png",
+      "metadataId": "predire"
+    },
+    {
+      "id": "predict_with_reference",
+      "categoryId": "chemometrics",
+      "requestType": "existing_model_predictions",
+      "presetAnswers": { "predictionMode": "with_reference" },
+      "preferCardText": true,
+      "label": "Prédire avec analyses de référence",
+      "description": "Utiliser un modèle existant et vérifier les valeurs prédites sur un sous-ensemble des échantillons par des analyses de chimie humide.",
+      "accent": "chemometrics",
+      "instrumentType": "Prédiction et vérification expérimentale",
       "iconPath": "./assets/icons/predire.png",
       "metadataId": "predire"
     },
@@ -987,10 +1072,10 @@
       "id": "maintain",
       "categoryId": "chemometrics",
       "requestType": "model_maintenance",
-      "label": "Entretenir",
+      "label": "Vérifier et adapter un modèle",
       "description": "Vérifier les performances d’un modèle, corriger un biais, le mettre à jour ou le transférer vers un autre instrument.",
       "accent": "chemometrics",
-      "instrumentType": "Maintenir un modèle",
+      "instrumentType": "Valider l’usage d’un modèle",
       "iconPath": "./assets/icons/entretenir.png",
       "metadataId": "entretenir"
     },

@@ -4,7 +4,7 @@
 globalThis.NIRS_CONFIG = {
   "tarifs": {
     "metadata": {
-      "version": "0.3.20",
+      "version": "0.3.25",
       "validFrom": "2026-01-01",
       "currency": "EUR",
       "taxMode": "HT",
@@ -59,6 +59,12 @@ globalThis.NIRS_CONFIG = {
         "costCategory": "training",
         "partnershipTreatment": "offered"
       }
+    },
+    "billedEstimateRangeLimit": {
+      "enabled": true,
+      "rate": 0.15,
+      "overflowPolicy": "quote_required",
+      "exceededMessage": "La variation des volumes ou du périmètre dépasse le plafond de fourchette du pré-devis. Le total reste sur devis, à discuter avec le plateau. Les hypothèses et les coûts seront revus avec le plateau sans réduction artificielle des volumes prévus."
     },
     "preQuoteUncertainty": {
       "enabled": true,
@@ -756,6 +762,46 @@ globalThis.NIRS_CONFIG = {
         "costCategory": "scientific_expertise"
       }
     },
+    "predictionReferenceAnalyses": {
+      "samplingRate": {
+        "min": 0.1,
+        "max": 0.1
+      },
+      "maxReferenceSamples": 100,
+      "quantityRounding": "ceil",
+      "applyUrgency": false,
+      "applyContextCoefficient": false,
+      "costCategory": "pass_through",
+      "discussionRangePolicy": {
+        "mode": "none"
+      },
+      "analyses": {
+        "starch": {
+          "label": "Chimie humide — amidon",
+          "unit": "analyse",
+          "contextAmounts": {
+            "internal_agap": 10,
+            "public_research_lab": 40,
+            "partnership": 20,
+            "subcontracting": 50
+          }
+        },
+        "protein": {
+          "label": "Chimie humide — protéines (sous-traitance SELMET)",
+          "unit": "analyse",
+          "contextAmounts": {
+            "internal_agap": 50,
+            "public_research_lab": 50,
+            "partnership": 50,
+            "subcontracting": 50
+          }
+        },
+        "other": {
+          "label": "Chimie humide — autre propriété",
+          "pricingMode": "quote"
+        }
+      }
+    },
     "options": {
       "quality_control": {
         "label": "Contrôle qualité du lot",
@@ -979,7 +1025,7 @@ globalThis.NIRS_CONFIG = {
         "order": 30,
         "mode": "negotiated_partnership",
         "billedShare": {
-          "min": 0.5,
+          "min": 1,
           "max": 1
         },
         "requiresProjectDetails": true,
@@ -1113,21 +1159,31 @@ globalThis.NIRS_CONFIG = {
     },
     "spectralThroughputProfiles": {
       "asd_labspec": {
-        "clamp": {
-          "label": "Pince",
+        "contact_probe_2cm": {
+          "label": "Sonde de contact 2 cm",
           "default": true,
-          "measurementWindow": "Zone circulaire d’environ 10 mm de diamètre.",
+          "measurementWindow": "Sonde de contact de 2 cm.",
           "samplesPerHour": {
-            "min": 12,
-            "max": 25
+            "min": 80,
+            "max": 100
           }
         },
-        "optical_fiber": {
-          "label": "Fibre optique",
-          "measurementWindow": "Zone dépendant de la distance entre la fibre et l’échantillon ; généralement quelques millimètres à environ 1 cm.",
+        "clamp": {
+          "label": "Pince à feuille",
+          "measurementWindow": "Pince adaptée à la mesure des feuilles.",
+          "vigilance": "Positionnement et surface mesurée.",
           "samplesPerHour": {
-            "min": 15,
-            "max": 30
+            "min": 60,
+            "max": 80
+          }
+        },
+        "microprobe_03cm": {
+          "label": "Microsonde 0,3 cm",
+          "measurementWindow": "Microsonde de 0,3 cm.",
+          "vigilance": "Accessibilité et stabilité de la sonde.",
+          "samplesPerHour": {
+            "min": 60,
+            "max": 80
           }
         }
       },
@@ -1136,34 +1192,38 @@ globalThis.NIRS_CONFIG = {
           "label": "Mesure directe sans adaptateur",
           "default": true,
           "measurementWindow": "Capacité indicative à valider par le plateau pour la mesure directe sans adaptateur.",
+          "vigilance": "Valeur indicative accélérée, à confirmer sur des campagnes réelles selon la présentation de l’échantillon.",
           "samplesPerHour": {
-            "min": 20,
-            "max": 40
+            "min": 80,
+            "max": 100
           },
           "requiresValidation": true
         },
         "tablet_probe": {
           "label": "Sonde à comprimé",
           "measurementWindow": "Zone centrale du comprimé en contact avec la sonde ; dimension exacte selon l’embout utilisé.",
+          "vigilance": "Contact, repositionnement et nettoyage.",
           "samplesPerHour": {
-            "min": 12,
-            "max": 25
+            "min": 80,
+            "max": 100
           }
         },
         "vial_holder": {
           "label": "Support pour vial",
           "measurementWindow": "Mesure à travers la paroi du vial sur une zone de quelques millimètres ; elle dépend du diamètre et du matériau du vial.",
+          "vigilance": "Mesure à travers la paroi.",
           "samplesPerHour": {
-            "min": 10,
-            "max": 20
+            "min": 20,
+            "max": 40
           }
         },
         "liquid_drop_adapter": {
           "label": "Adaptateur pour liquide — goutte",
           "measurementWindow": "Petite zone couverte par une goutte déposée sur la fenêtre de mesure.",
+          "vigilance": "Manipulation et nettoyage plus lents.",
           "samplesPerHour": {
-            "min": 6,
-            "max": 12
+            "min": 15,
+            "max": 25
           }
         }
       },
@@ -1172,33 +1232,36 @@ globalThis.NIRS_CONFIG = {
           "label": "Mesure directe",
           "default": true,
           "measurementWindow": "Zone d’analyse d’environ 10 mm de diamètre.",
+          "vigilance": "Préparation et homogénéité.",
           "samplesPerHour": {
-            "min": 12,
-            "max": 25
+            "min": 80,
+            "max": 100
           }
         },
         "cup_5cm": {
           "label": "Coupelle 5 cm",
           "measurementWindow": "Zone instrumentale d’environ 10 mm ; la surface effective est plus grande lorsque la coupelle tourne.",
+          "vigilance": "Rotation et remplissage de la coupelle.",
           "samplesPerHour": {
-            "min": 8,
-            "max": 18
+            "min": 30,
+            "max": 60
           }
         },
         "cup_9cm": {
           "label": "Coupelle 9 cm",
           "measurementWindow": "Zone instrumentale d’environ 10 mm ; la surface effective est plus grande lorsque la coupelle tourne.",
+          "vigilance": "Rotation et remplissage de la coupelle.",
           "samplesPerHour": {
-            "min": 8,
-            "max": 18
+            "min": 30,
+            "max": 60
           }
         },
         "vial_or_bottle": {
-          "label": "Pilulier ou flacon",
+          "label": "Pilulier",
           "measurementWindow": "Mesure à travers la paroi du contenant sur une zone d’environ 10 mm.",
           "samplesPerHour": {
-            "min": 10,
-            "max": 20
+            "min": 20,
+            "max": 40
           }
         }
       },
@@ -1207,9 +1270,10 @@ globalThis.NIRS_CONFIG = {
           "label": "ATR diamant",
           "default": true,
           "measurementWindow": "Zone de contact de quelques millimètres, selon le cristal ATR.",
+          "vigilance": "Contact, pression et nettoyage de l’ATR.",
           "samplesPerHour": {
-            "min": 6,
-            "max": 15
+            "min": 15,
+            "max": 25
           }
         }
       }
@@ -1350,7 +1414,7 @@ globalThis.NIRS_CONFIG = {
         {
           "label": "Part facturée partenariat",
           "path": "contexts.partnership.billedShare",
-          "current": "0.50-1.00"
+          "current": "1.00 après personnel et formations offerts, sans seconde plage"
         },
         {
           "label": "Forfaits de gestion",
@@ -1401,6 +1465,16 @@ globalThis.NIRS_CONFIG = {
           "label": "Prédiction",
           "path": "chemometrics.existing_model_predictions",
           "current": "formule + ±15 %"
+        },
+        {
+          "label": "Analyses de référence en chimie humide",
+          "path": "predictionReferenceAnalyses",
+          "current": "10 % des échantillons prédits, plafond 100 ; amidon 10/40/20/50 EUR ; protéines 50 EUR, sans urgence ni coefficient"
+        },
+        {
+          "label": "Plafond global de fourchette facturée",
+          "path": "billedEstimateRangeLimit",
+          "current": "±15 % maximum, sinon total sur devis"
         },
         {
           "label": "Entretien",
@@ -1617,6 +1691,7 @@ globalThis.NIRS_CONFIG = {
             "step": 2,
             "type": "number",
             "label": "Nombre de demi-journées réservées",
+            "required": true,
             "min": 1,
             "max": 60,
             "stepValue": 1,
@@ -1632,6 +1707,31 @@ globalThis.NIRS_CONFIG = {
               ]
             },
             "section": "volume"
+          },
+          {
+            "id": "samples",
+            "step": 2,
+            "type": "number",
+            "label": "Nombre estimé d’échantillons indépendants",
+            "required": true,
+            "min": 1,
+            "stepValue": 1,
+            "integer": true,
+            "section": "volume",
+            "help": "Information destinée à la validation du pré-devis par le plateau, sans incidence sur la tarification à la demi-journée."
+          },
+          {
+            "id": "replicates",
+            "step": 2,
+            "type": "number",
+            "label": "Répétitions spectrales par échantillon",
+            "required": false,
+            "min": 1,
+            "stepValue": 1,
+            "integer": true,
+            "default": 2,
+            "section": "volume",
+            "help": "Facultatif, deux répétitions proposées par défaut. Cette information ne modifie pas le tarif."
           },
           {
             "id": "matrixPresentation",
@@ -2023,6 +2123,25 @@ globalThis.NIRS_CONFIG = {
         "pricingHint": "Estimation possible",
         "fields": [
           {
+            "id": "predictionMode",
+            "step": 2,
+            "type": "radio",
+            "label": "Vérification des prédictions",
+            "required": true,
+            "default": "without_reference",
+            "options": [
+              {
+                "value": "without_reference",
+                "label": "Prédiction sans analyses de référence"
+              },
+              {
+                "value": "with_reference",
+                "label": "Prédiction avec analyses de référence"
+              }
+            ],
+            "section": "instrument_mode"
+          },
+          {
             "id": "instrument",
             "step": 2,
             "type": "select",
@@ -2036,6 +2155,7 @@ globalThis.NIRS_CONFIG = {
             "step": 2,
             "type": "number",
             "label": "Nombre de spectres",
+            "required": true,
             "min": 1,
             "max": 100000,
             "stepValue": 1,
@@ -2048,12 +2168,57 @@ globalThis.NIRS_CONFIG = {
             "step": 2,
             "type": "number",
             "label": "Nombre de propriétés ou modèles",
+            "required": true,
             "min": 1,
             "max": 100,
             "stepValue": 1,
             "integer": true,
             "default": 1,
             "section": "volume"
+          },
+          {
+            "id": "samples",
+            "step": 2,
+            "type": "number",
+            "label": "Nombre d’échantillons indépendants à prédire",
+            "required": true,
+            "min": 1,
+            "max": 100000,
+            "stepValue": 1,
+            "integer": true,
+            "visibleWhen": {
+              "field": "predictionMode",
+              "equals": "with_reference"
+            },
+            "section": "volume",
+            "help": "Les analyses de chimie humide portent sur les échantillons indépendants, sans compter plusieurs fois les répétitions spectrales."
+          },
+          {
+            "id": "referenceProperties",
+            "step": 2,
+            "type": "checkboxList",
+            "label": "Propriétés à vérifier par chimie humide",
+            "required": true,
+            "options": [
+              {
+                "value": "starch",
+                "label": "Amidon"
+              },
+              {
+                "value": "protein",
+                "label": "Protéines"
+              },
+              {
+                "value": "other",
+                "label": "Autre propriété, sur devis"
+              }
+            ],
+            "visibleWhen": {
+              "field": "predictionMode",
+              "equals": "with_reference"
+            },
+            "section": "available_data",
+            "help": "Les analyses sont facturées par échantillon et par propriété sélectionnée. Précisez les autres propriétés dans le commentaire."
           },
           {
             "id": "spectraAlreadyAcquired",
@@ -2090,8 +2255,8 @@ globalThis.NIRS_CONFIG = {
         "configurationOrder": 30
       },
       "model_maintenance": {
-        "label": "Entretenir",
-        "definition": "Auditer, valider, corriger, mettre à jour ou transférer un modèle chimiométrique existant avec une première estimation volontairement large.",
+        "label": "Vérifier et adapter un modèle",
+        "definition": "Vérifier qu’un modèle chimiométrique est adapté à vos échantillons et à votre usage, puis le valider, le corriger, le mettre à jour ou le transférer si nécessaire.",
         "example": "Exemple : expliquer en quelques lignes le modèle concerné, les données disponibles et l’objectif de l’échange avec le plateau.",
         "pricingHint": "Tarifs indicatifs à confirmer avec le plateau.",
         "fields": [
@@ -2428,7 +2593,7 @@ globalThis.NIRS_CONFIG = {
       {
         "id": "chemometrics",
         "label": "Chimiométrie",
-        "description": "Construire, appliquer ou maintenir des modèles à partir de spectres et de données de référence.",
+        "description": "Construire des modèles, prédire des propriétés et vérifier l’adéquation des modèles à vos échantillons.",
         "order": 20
       }
     ],
@@ -2491,7 +2656,7 @@ globalThis.NIRS_CONFIG = {
         },
         "label": "ASD LabSpec",
         "instrumentType": "NIR portable avec sonde",
-        "description": "Acquérir des spectres NIR au laboratoire ou sur le terrain, avec une sonde ou une fibre optique.",
+        "description": "Acquérir des spectres NIR avec une sonde de contact de 2 cm, une pince à feuille ou une microsonde de 0,3 cm.",
         "accent": "measurement",
         "iconPath": "./assets/icons/labspec.png",
         "metadataId": "asd-labspec"
@@ -2525,10 +2690,29 @@ globalThis.NIRS_CONFIG = {
         "id": "predict",
         "categoryId": "chemometrics",
         "requestType": "existing_model_predictions",
-        "label": "Prédire",
-        "description": "Utiliser un modèle existant pour produire des valeurs prédites à partir de nouveaux spectres.",
+        "presetAnswers": {
+          "predictionMode": "without_reference"
+        },
+        "preferCardText": true,
+        "label": "Prédire sans analyses de référence",
+        "description": "Utiliser un modèle existant avec examen de conformité des spectres, sans vérification expérimentale des valeurs prédites sur le lot.",
         "accent": "chemometrics",
         "instrumentType": "Appliquer un modèle",
+        "iconPath": "./assets/icons/predire.png",
+        "metadataId": "predire"
+      },
+      {
+        "id": "predict_with_reference",
+        "categoryId": "chemometrics",
+        "requestType": "existing_model_predictions",
+        "presetAnswers": {
+          "predictionMode": "with_reference"
+        },
+        "preferCardText": true,
+        "label": "Prédire avec analyses de référence",
+        "description": "Utiliser un modèle existant et vérifier les valeurs prédites sur un sous-ensemble des échantillons par des analyses de chimie humide.",
+        "accent": "chemometrics",
+        "instrumentType": "Prédiction et vérification expérimentale",
         "iconPath": "./assets/icons/predire.png",
         "metadataId": "predire"
       },
@@ -2536,10 +2720,10 @@ globalThis.NIRS_CONFIG = {
         "id": "maintain",
         "categoryId": "chemometrics",
         "requestType": "model_maintenance",
-        "label": "Entretenir",
+        "label": "Vérifier et adapter un modèle",
         "description": "Vérifier les performances d’un modèle, corriger un biais, le mettre à jour ou le transférer vers un autre instrument.",
         "accent": "chemometrics",
-        "instrumentType": "Maintenir un modèle",
+        "instrumentType": "Valider l’usage d’un modèle",
         "iconPath": "./assets/icons/entretenir.png",
         "metadataId": "entretenir"
       },
@@ -2607,8 +2791,8 @@ globalThis.NIRS_CONFIG = {
         "text": "Application d'un modèle existant à de nouveaux spectres. La validité dépend du domaine couvert par la calibration."
       },
       "maintenance": {
-        "title": "Maintenance",
-        "text": "Contrôle périodique du modèle et mise à jour lorsque les produits, saisons, instruments ou conditions de mesure évoluent."
+        "title": "Vérification et adaptation d’un modèle",
+        "text": "Vérification de l’adéquation du modèle à vos échantillons et à votre usage, avec validation ou adaptation selon les besoins."
       },
       "bias_correction": {
         "title": "Correction de biais",
@@ -2625,6 +2809,18 @@ globalThis.NIRS_CONFIG = {
     },
     "result": {
       "nextStep": "Transmettre ces éléments au plateau pour discuter et valider le périmètre scientifique, les échantillons, les données disponibles, le délai et le devis définitif."
+    },
+    "acquisition": {
+      "capacityHelp": "Les cadences sont indicatives. Elles varient selon l’expérience de l’opérateur, la présentation et la nature de la matrice, ainsi que les manipulations, le repositionnement et le nettoyage nécessaires. Par exemple, des arachides entières et une pâte d’arachide ne se mesurent pas à la même cadence.",
+      "reservationReview": "Le nombre de demi-journées proposé sera confirmé avec le plateau. Il pourra être ajusté après discussion du type et du nombre d’échantillons, de leur préparation et des besoins de nettoyage, de vaisselle ou d’aspiration.",
+      "obsoleteDevice": "L’ancien dispositif « fibre optique » n’est plus proposé. Choisissez la sonde correspondant aux mesures prévues."
+    },
+    "prediction": {
+      "title": "Fiabilité et domaine d’application des prédictions",
+      "conformity": "Le plateau examine la conformité des spectres et les éventuels changements de domaine par rapport aux données de calibration pour apprécier le niveau de confiance attendu. Ce diagnostic ne remplace pas une validation par des analyses de référence.",
+      "withoutReference": "Sans analyses de référence sur le lot, la justesse des valeurs prédites n’est pas vérifiée expérimentalement. Les résultats doivent être interprétés au regard du domaine de validité du modèle et de l’usage envisagé.",
+      "withReference": "Le pré-devis prévoit des analyses de chimie humide sur {samplingRange} des échantillons indépendants à prédire, arrondis à l’entier supérieur et plafonnés à {maxSamples} échantillons par prestation, pour chaque propriété sélectionnée. Le programme d’analyses sera discuté en amont avec le plateau et pourra être revu à l’issue du diagnostic, selon les spécificités des nouveaux spectres (X) par rapport à ceux de la calibration et, lorsque des mesures de référence seront disponibles, des nouvelles valeurs de référence (Y) par rapport à celles de la calibration : plages de valeurs, distributions et méthodes de mesure. Toute adaptation du nombre d’analyses et de son coût sera discutée et validée avec le demandeur avant la réalisation d’analyses complémentaires. Les analyses sont ajoutées au pré-devis sans coefficient de contexte ni majoration d’urgence. Cette vérification partielle ne garantit pas à elle seule la validité de toutes les prédictions ni la mise à jour du modèle.",
+      "releasePolicy": "En cas d’écart important avec le domaine de calibration, le plateau peut suspendre la restitution des prédictions jugées non fiables après revue scientifique. Il en informe le demandeur, documente les limites constatées et discute des analyses de référence ou adaptations nécessaires avant toute restitution."
     },
     "provider": {
       "name": "Plateau Bioch&Spir",
@@ -2649,6 +2845,7 @@ globalThis.NIRS_CONFIG = {
       "quoteValidityDays": 45,
       "vatNote": "L'ajout éventuel de la TVA dépend du statut du demandeur et des règles applicables.",
       "administrativeFeeNote": "Il couvre la préparation administrative, la coordination, la facturation et le suivi du dossier.",
+      "estimateRangeNote": "La fourchette reflète les ajustements possibles de préparation, de manipulation et d’analyse selon les échantillons, les données disponibles et le périmètre retenu. Le montant exact sera discuté et affiné avec le plateau avant l’établissement du devis définitif. En partenariat, le personnel et les formations apportés par Bioch&SPIR ne sont pas ajoutés au montant à payer ; aucune seconde plage de facturation n’est appliquée.",
       "conditions": "Un bon de commande ou un document contractuel devra être communiqué avant le démarrage des prestations lorsque les règles du projet l'exigent.",
       "calibrationNote": {
         "title": "Calibration chimiométrique",
@@ -2710,8 +2907,8 @@ globalThis.NIRS_CONFIG = {
       },
       {
         "id": "entretenir",
-        "titre": "Entretenir",
-        "sstitre": "Maintenir un modèle",
+        "titre": "Vérifier et adapter un modèle",
+        "sstitre": "Valider l’usage d’un modèle",
         "description": "Vérifier les performances d’un modèle, corriger un biais, le mettre à jour ou le transférer vers un autre instrument.",
         "png": "data/icones/entretenir_light.png",
         "svg": "svg/entretenir.svg",
@@ -2748,7 +2945,7 @@ globalThis.NIRS_CONFIG = {
         "id": "asd-labspec",
         "titre": "ASD LabSpec",
         "sstitre": "NIR portable avec sonde",
-        "description": "Acquérir des spectres NIR au laboratoire ou sur le terrain, avec une sonde ou une fibre optique.",
+        "description": "Acquérir des spectres NIR avec une sonde de contact de 2 cm, une pince à feuille ou une microsonde de 0,3 cm.",
         "png": "data/icones/labspec2_light.png",
         "svg": "svg/asd-labspec.svg",
         "source_recadree": "sources_recadrees/asd-labspec.png"

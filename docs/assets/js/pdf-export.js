@@ -107,11 +107,14 @@
     pdf.setFontSize(size);
     pdf.setTextColor(options.color || TEXT);
     const lines = pdf.splitTextToSize(pdfText(text), width);
-    pdf.text(lines, x, y, { lineHeightFactor: lineHeight, align: options.align || "left" });
+    const anchorX = options.align === "right" ? x + width : x;
+    pdf.text(lines, anchorX, y, { lineHeightFactor: lineHeight, align: options.align || "left" });
     return lines.length * size * 0.3528 * lineHeight;
   }
 
-  function splitLines(pdf, text, width) {
+  function splitLines(pdf, text, width, { size = 9, bold = false } = {}) {
+    pdf.setFont("helvetica", bold ? "bold" : "normal");
+    pdf.setFontSize(size);
     return pdf.splitTextToSize(pdfText(text), width);
   }
 
@@ -286,6 +289,7 @@
   }
 
   function totalText(line, currency) {
+    if (line.billingRangeReview?.required) return "À confirmer";
     if (line.pricingMode === "quote") return "Sur devis";
     if (line.offeredByPlatform) return "Offert";
     return pdfRangeMoney({
@@ -297,7 +301,7 @@
   function serviceDescription(line) {
     if (line.configRule === "externalAdministrativeFee") return "Forfait de gestion du dossier";
     const label = line.parentLabel && line.parentLabel !== "Global" ? `${line.parentLabel} - ${line.label}` : line.label;
-    return [label, line.trainingDetails].filter(Boolean).join(" - ");
+    return [label, line.trainingDetails, line.configRule === "predictionReferenceAnalyses" ? line.reason : ""].filter(Boolean).join(" - ");
   }
 
   function lineTotalRange(line) {
@@ -356,10 +360,13 @@
         ? "quantité de spectres indicative à valider avec le plateau"
         : numberRangeText(capacity.min, capacity.max, "spectres indicatifs");
       const mode = serviceModeLabel(item);
+      const answers = item.answers || {};
       return [
         "Prendre des spectres",
         instrument ? `spectromètre ${instrument}` : "",
         device ? `sonde/dispositif ${device}` : "",
+        answers.samples ? `${answers.samples} échantillon(s) estimé(s)` : "",
+        answers.replicates ? `${answers.replicates} répétition(s) spectrale(s) par échantillon` : "",
         spectra,
         mode
       ].filter(Boolean).join(" - ");
@@ -391,10 +398,11 @@
   function pdfMaintenanceSummary(config, item) {
     const answers = item.answers || {};
     const maintenanceType = migrateMaintenanceTypeForPdf(answers.maintenanceType);
-    const intervention = optionLabel(config, "model_maintenance", "maintenanceType", maintenanceType) || "Entretenir";
+    const label = config.prestations.requestTypes.model_maintenance.label;
+    const intervention = optionLabel(config, "model_maintenance", "maintenanceType", maintenanceType) || label;
     const comment = String(answers.maintenanceComment || answers.comment || "").trim();
     return [
-      `Entretenir - ${intervention}`,
+      `${label} - ${intervention}`,
       comment || "Informations complémentaires à préciser avec le plateau",
       "Tarifs indicatifs à confirmer avec le plateau."
     ].filter(Boolean).join(" - ");
@@ -510,8 +518,14 @@
         contextId: quoteResult.context?.id || ""
       },
       partnershipBreakdown: quoteResult.partnershipBreakdown || null,
+      billingRangeReview: quoteResult.billingRangeReview || null,
       administrativeFee: (quoteResult.items || []).find((line) => line.configRule === "externalAdministrativeFee") || null,
       terms,
+      predictionClauses: [...new Set((quoteResult.itemResults || [])
+        .filter((item) => item.requestType === "existing_model_predictions" && item.status !== "incomplete")
+        .flatMap((item) => NIRSApp.predictionNotes(config, item.answers)))],
+      acquisitionClauses: (quoteResult.itemResults || []).some((item) => item.requestType === "spectra_acquisition")
+        ? [config.textes.acquisition.capacityHelp, config.textes.acquisition.reservationReview] : [],
       footerBanner: options.footerBanner || config.assets?.images?.footerBanner || "",
       logo: logoBioch(config)
     };
@@ -558,7 +572,7 @@
 
   function drawRowsBox(pdf, title, rows, x, y, width) {
     const textWidth = width - 8;
-    const heights = rows.map(([label, value]) => textHeight(splitLines(pdf, `${label} : ${value}`, textWidth), 7.8, 1.2) + 2);
+    const heights = rows.map(([label, value]) => textHeight(splitLines(pdf, `${label} : ${value}`, textWidth, { size: 7.8 }), 7.8, 1.2) + 2);
     const height = Math.max(34, 10 + heights.reduce((sum, value) => sum + value, 0));
     drawPanel(pdf, x, y, width, height, "#ffffff");
     drawText(pdf, title, x + 4, y + 6, textWidth, { size: 8.5, bold: true, color: BLUE });
@@ -588,9 +602,9 @@
     const size = 8.5;
     const lineHeight = 1.28;
     if (entry.label && entry.text) {
-      return textHeight(splitLines(pdf, entry.text, Math.max(20, width - labelWidth)), size, lineHeight) + 1;
+      return textHeight(splitLines(pdf, entry.text, Math.max(20, width - labelWidth), { size }), size, lineHeight) + 1;
     }
-    return textHeight(splitLines(pdf, entry.text || entry.label || "", width), size, lineHeight) + 1;
+    return textHeight(splitLines(pdf, entry.text || entry.label || "", width, { size }), size, lineHeight) + 1;
   }
 
   function drawDescriptionEntry(pdf, entry, y, vm, pageRef) {
@@ -615,13 +629,13 @@
       pdf.text(pdfText(labelText), textX, y);
       if (entry.text) {
         pdf.setFont("helvetica", "normal");
-        const lines = splitLines(pdf, entry.text, Math.max(20, width - labelWidth));
+        const lines = splitLines(pdf, entry.text, Math.max(20, width - labelWidth), { size });
         pdf.text(lines, textX + labelWidth, y, { lineHeightFactor: lineHeight });
         return y + Math.max(1, lines.length) * lineStep + 1;
       }
       return y + lineStep + 1;
     }
-    const lines = splitLines(pdf, entry.text, width);
+    const lines = splitLines(pdf, entry.text, width, { size });
     pdf.text(lines, textX, y, { lineHeightFactor: lineHeight });
     return y + Math.max(1, lines.length) * lineStep + 1;
   }
@@ -666,8 +680,8 @@
     y += drawText(pdf, "Tableau des prestations", A4.margin, y, 180, { size: 12, bold: true, color: BLUE }) + 2;
     y = drawTableHeader(pdf, y);
     vm.services.forEach((row) => {
-      const descLines = splitLines(pdf, row.description, SERVICE_TABLE.descriptionWidth);
-      const totalLines = splitLines(pdf, row.total, SERVICE_TABLE.totalWidth);
+      const descLines = splitLines(pdf, row.description, SERVICE_TABLE.descriptionWidth, { size: 7.5, bold: row.configRule === "externalAdministrativeFee" });
+      const totalLines = splitLines(pdf, row.total, SERVICE_TABLE.totalWidth, { size: 8, bold: true });
       const height = Math.max(9, 5 + Math.max(
         textHeight(descLines, 7.5, 1.18),
         textHeight(totalLines, 8, 1.18)
@@ -729,7 +743,7 @@
     drawText(pdf, "Lecture", x + cols[0] + cols[1] + 2, y + 5.3, cols[2], { size: 7.5, bold: true, color: BLUE });
     y += 8;
     rows.forEach(([label, range, note]) => {
-      const amount = pdfRangeMoney(range, vm.totals.currency);
+      const amount = label === "Part facturée indicative" && vm.billingRangeReview?.required ? "Sur devis" : pdfRangeMoney(range, vm.totals.currency);
       y = ensurePage(pdf, y, 9, vm, pageRef);
       pdf.setDrawColor("#e3ebf1");
       pdf.line(x, y + 8, x + width, y + 8);
@@ -747,7 +761,7 @@
   function drawTotals(pdf, vm, y, pageRef) {
     y = ensurePage(pdf, y, 52, vm, pageRef);
     y += drawText(pdf, "Totaux", A4.margin, y, 180, { size: 12, bold: true, color: BLUE }) + 2;
-    const amountLines = splitLines(pdf, totalAmountTextPdf(vm), 176);
+    const amountLines = splitLines(pdf, totalAmountTextPdf(vm), 176, { size: 13, bold: true });
     const panelHeight = Math.max(23, 14 + textHeight(amountLines, 13, 1.12));
     drawPanel(pdf, A4.margin, y, 186, panelHeight, PALE, "#a8cbdc");
     drawText(pdf, totalTitlePdf(vm), A4.margin + 5, y + 7, 176, { size: 8.5, bold: true, color: BLUE });
@@ -760,6 +774,10 @@
       y += drawText(pdf, `Ce montant comprend uniquement les prestations chiffrées. ${pending} dans le total présenté.`, A4.margin, y, 184, { size: 7.8, color: MUTED, lineHeight: 1.22 }) + 4;
     }
     if (vm.terms.vatNote) y += drawText(pdf, vm.terms.vatNote, A4.margin, y, 184, { size: 7.8, color: MUTED }) + 4;
+    if (vm.terms.estimateRangeNote) {
+      y = ensurePage(pdf, y, 5, vm, pageRef);
+      y = drawLinkedParagraph(pdf, vm.terms.estimateRangeNote, A4.margin, y, 184, { size: 7.8, color: MUTED, lineHeight: 1.22 }, vm, pageRef) + 4;
+    }
     return y;
   }
 
@@ -773,7 +791,9 @@
       y = ensurePage(pdf, y, 14, vm, pageRef);
       y += drawText(pdf, "Clauses", A4.margin, y, 180, { size: 10, bold: true, color: BLUE }) + 2;
       clauses.forEach((clause) => {
-        const lines = splitLines(pdf, `- ${clause}`, 182);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(7.6);
+        const lines = splitLines(pdf, `- ${clause}`, 182, { size: 7.6 });
         const height = textHeight(lines, 7.6, 1.22) + 2;
         y = ensurePage(pdf, y, height, vm, pageRef);
         drawText(pdf, lines.join("\n"), A4.margin + 2, y, 182, { size: 7.6, color: MUTED, lineHeight: 1.22 });
@@ -793,7 +813,7 @@
           : vm.totals.contextId === "public_research_lab"
             ? terms.publicResearchLabClauses
             : terms.internalClauses;
-      return [...terms.commonClauses, ...(Array.isArray(contextClauses) ? contextClauses : [])];
+      return [...terms.commonClauses, ...vm.acquisitionClauses, ...vm.predictionClauses, ...(vm.billingRangeReview?.required ? [vm.billingRangeReview.message] : []), ...(Array.isArray(contextClauses) ? contextClauses : [])];
     }
     const legacy = Array.isArray(terms.clauses) ? terms.clauses : [];
     if (vm.totals.contextId === "partnership") return legacy;

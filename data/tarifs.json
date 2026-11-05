@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "version": "0.3.20",
+    "version": "0.3.25",
     "validFrom": "2026-01-01",
     "currency": "EUR",
     "taxMode": "HT",
@@ -55,6 +55,12 @@
       "costCategory": "training",
       "partnershipTreatment": "offered"
     }
+  },
+  "billedEstimateRangeLimit": {
+    "enabled": true,
+    "rate": 0.15,
+    "overflowPolicy": "quote_required",
+    "exceededMessage": "La variation des volumes ou du périmètre dépasse le plafond de fourchette du pré-devis. Le total reste sur devis, à discuter avec le plateau. Les hypothèses et les coûts seront revus avec le plateau sans réduction artificielle des volumes prévus."
   },
   "preQuoteUncertainty": {
     "enabled": true,
@@ -752,6 +758,41 @@
       "costCategory": "scientific_expertise"
     }
   },
+  "predictionReferenceAnalyses": {
+    "samplingRate": { "min": 0.1, "max": 0.1 },
+    "maxReferenceSamples": 100,
+    "quantityRounding": "ceil",
+    "applyUrgency": false,
+    "applyContextCoefficient": false,
+    "costCategory": "pass_through",
+    "discussionRangePolicy": { "mode": "none" },
+    "analyses": {
+      "starch": {
+        "label": "Chimie humide — amidon",
+        "unit": "analyse",
+        "contextAmounts": {
+          "internal_agap": 10,
+          "public_research_lab": 40,
+          "partnership": 20,
+          "subcontracting": 50
+        }
+      },
+      "protein": {
+        "label": "Chimie humide — protéines (sous-traitance SELMET)",
+        "unit": "analyse",
+        "contextAmounts": {
+          "internal_agap": 50,
+          "public_research_lab": 50,
+          "partnership": 50,
+          "subcontracting": 50
+        }
+      },
+      "other": {
+        "label": "Chimie humide — autre propriété",
+        "pricingMode": "quote"
+      }
+    }
+  },
   "options": {
     "quality_control": {
       "label": "Contrôle qualité du lot",
@@ -975,7 +1016,7 @@
       "order": 30,
       "mode": "negotiated_partnership",
       "billedShare": {
-        "min": 0.5,
+        "min": 1,
         "max": 1
       },
       "requiresProjectDetails": true,
@@ -1109,21 +1150,31 @@
   },
   "spectralThroughputProfiles": {
     "asd_labspec": {
-      "clamp": {
-        "label": "Pince",
+      "contact_probe_2cm": {
+        "label": "Sonde de contact 2 cm",
         "default": true,
-        "measurementWindow": "Zone circulaire d’environ 10 mm de diamètre.",
+        "measurementWindow": "Sonde de contact de 2 cm.",
         "samplesPerHour": {
-          "min": 12,
-          "max": 25
+          "min": 80,
+          "max": 100
         }
       },
-      "optical_fiber": {
-        "label": "Fibre optique",
-        "measurementWindow": "Zone dépendant de la distance entre la fibre et l’échantillon ; généralement quelques millimètres à environ 1 cm.",
+      "clamp": {
+        "label": "Pince à feuille",
+        "measurementWindow": "Pince adaptée à la mesure des feuilles.",
+        "vigilance": "Positionnement et surface mesurée.",
         "samplesPerHour": {
-          "min": 15,
-          "max": 30
+          "min": 60,
+          "max": 80
+        }
+      },
+      "microprobe_03cm": {
+        "label": "Microsonde 0,3 cm",
+        "measurementWindow": "Microsonde de 0,3 cm.",
+        "vigilance": "Accessibilité et stabilité de la sonde.",
+        "samplesPerHour": {
+          "min": 60,
+          "max": 80
         }
       }
     },
@@ -1132,34 +1183,38 @@
         "label": "Mesure directe sans adaptateur",
         "default": true,
         "measurementWindow": "Capacité indicative à valider par le plateau pour la mesure directe sans adaptateur.",
+        "vigilance": "Valeur indicative accélérée, à confirmer sur des campagnes réelles selon la présentation de l’échantillon.",
         "samplesPerHour": {
-          "min": 20,
-          "max": 40
+          "min": 80,
+          "max": 100
         },
         "requiresValidation": true
       },
       "tablet_probe": {
         "label": "Sonde à comprimé",
         "measurementWindow": "Zone centrale du comprimé en contact avec la sonde ; dimension exacte selon l’embout utilisé.",
+        "vigilance": "Contact, repositionnement et nettoyage.",
         "samplesPerHour": {
-          "min": 12,
-          "max": 25
+          "min": 80,
+          "max": 100
         }
       },
       "vial_holder": {
         "label": "Support pour vial",
         "measurementWindow": "Mesure à travers la paroi du vial sur une zone de quelques millimètres ; elle dépend du diamètre et du matériau du vial.",
+        "vigilance": "Mesure à travers la paroi.",
         "samplesPerHour": {
-          "min": 10,
-          "max": 20
+          "min": 20,
+          "max": 40
         }
       },
       "liquid_drop_adapter": {
         "label": "Adaptateur pour liquide — goutte",
         "measurementWindow": "Petite zone couverte par une goutte déposée sur la fenêtre de mesure.",
+        "vigilance": "Manipulation et nettoyage plus lents.",
         "samplesPerHour": {
-          "min": 6,
-          "max": 12
+          "min": 15,
+          "max": 25
         }
       }
     },
@@ -1168,33 +1223,36 @@
         "label": "Mesure directe",
         "default": true,
         "measurementWindow": "Zone d’analyse d’environ 10 mm de diamètre.",
+        "vigilance": "Préparation et homogénéité.",
         "samplesPerHour": {
-          "min": 12,
-          "max": 25
+          "min": 80,
+          "max": 100
         }
       },
       "cup_5cm": {
         "label": "Coupelle 5 cm",
         "measurementWindow": "Zone instrumentale d’environ 10 mm ; la surface effective est plus grande lorsque la coupelle tourne.",
+        "vigilance": "Rotation et remplissage de la coupelle.",
         "samplesPerHour": {
-          "min": 8,
-          "max": 18
+          "min": 30,
+          "max": 60
         }
       },
       "cup_9cm": {
         "label": "Coupelle 9 cm",
         "measurementWindow": "Zone instrumentale d’environ 10 mm ; la surface effective est plus grande lorsque la coupelle tourne.",
+        "vigilance": "Rotation et remplissage de la coupelle.",
         "samplesPerHour": {
-          "min": 8,
-          "max": 18
+          "min": 30,
+          "max": 60
         }
       },
       "vial_or_bottle": {
-        "label": "Pilulier ou flacon",
+        "label": "Pilulier",
         "measurementWindow": "Mesure à travers la paroi du contenant sur une zone d’environ 10 mm.",
         "samplesPerHour": {
-          "min": 10,
-          "max": 20
+          "min": 20,
+          "max": 40
         }
       }
     },
@@ -1203,9 +1261,10 @@
         "label": "ATR diamant",
         "default": true,
         "measurementWindow": "Zone de contact de quelques millimètres, selon le cristal ATR.",
+        "vigilance": "Contact, pression et nettoyage de l’ATR.",
         "samplesPerHour": {
-          "min": 6,
-          "max": 15
+          "min": 15,
+          "max": 25
         }
       }
     }
@@ -1346,7 +1405,7 @@
       {
         "label": "Part facturée partenariat",
         "path": "contexts.partnership.billedShare",
-        "current": "0.50-1.00"
+        "current": "1.00 après personnel et formations offerts, sans seconde plage"
       },
       {
         "label": "Forfaits de gestion",
@@ -1397,6 +1456,16 @@
         "label": "Prédiction",
         "path": "chemometrics.existing_model_predictions",
         "current": "formule + ±15 %"
+      },
+      {
+        "label": "Analyses de référence en chimie humide",
+        "path": "predictionReferenceAnalyses",
+        "current": "10 % des échantillons prédits, plafond 100 ; amidon 10/40/20/50 EUR ; protéines 50 EUR, sans urgence ni coefficient"
+      },
+      {
+        "label": "Plafond global de fourchette facturée",
+        "path": "billedEstimateRangeLimit",
+        "current": "±15 % maximum, sinon total sur devis"
       },
       {
         "label": "Entretien",

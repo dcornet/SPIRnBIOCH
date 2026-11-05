@@ -49,6 +49,7 @@ function participant(id = "participant-1", instrument = "viavi_micronir", status
 function item(requestType, answers = {}) {
   const mergedAnswers = {
     ...app.defaultAnswersForRequest(config.prestations, requestType),
+    ...(requestType === "spectra_acquisition" ? { samples: 100 } : {}),
     ...answers,
     requestType
   };
@@ -110,6 +111,7 @@ test("catalogue avec une carte par spectrometre et formations non ajoutables", (
   assert.deepEqual(cards.filter((card) => card.categoryId === "chemometrics" && !card.disabled).map((card) => card.requestType), [
     "validated_calibration",
     "existing_model_predictions",
+    "existing_model_predictions",
     "model_maintenance",
     "other_chemometrics"
   ]);
@@ -121,8 +123,9 @@ test("catalogue formule les prestations et référence les icônes locales", () 
   assert.equal(cardsById.training_instrument.label, "Formation à un instrument");
   assert.equal(cardsById.training_theoretical_nirs.label, "Formation théorique NIRS");
   assert.equal(cardsById.calibrate.label, "Calibrer");
-  assert.equal(cardsById.predict.label, "Prédire");
-  assert.equal(cardsById.maintain.label, "Entretenir");
+  assert.equal(cardsById.predict.label, "Prédire sans analyses de référence");
+  assert.equal(cardsById.predict_with_reference.label, "Prédire avec analyses de référence");
+  assert.equal(cardsById.maintain.label, "Vérifier et adapter un modèle");
   assert.equal(cardsById.other_chemometrics.label, "Autre demande");
   for (const card of config.prestations.catalogCards) {
     assert.match(card.description, /^(Acquérir|Apprendre|Construire|Utiliser|Vérifier|Décrire|Comprendre)\b/);
@@ -339,16 +342,18 @@ test("reservation autonome et accompagnee utilise le modele de cout a la demi-jo
 
 test("capacite spectrale indicative selon le dispositif et 4 heures par demi-journee", () => {
   const cases = [
-    ["asd_labspec", "clamp", 480, 1000],
-    ["asd_labspec", "optical_fiber", 600, 1200],
-    ["viavi_micronir", "tablet_probe", 480, 1000],
-    ["viavi_micronir", "vial_holder", 400, 800],
-    ["viavi_micronir", "liquid_drop_adapter", 240, 480],
-    ["bruker_tango", "direct_measurement", 480, 1000],
-    ["bruker_tango", "cup_5cm", 320, 720],
-    ["bruker_tango", "cup_9cm", 320, 720],
-    ["bruker_tango", "vial_or_bottle", 400, 800],
-    ["mir_perkin_elmer", "diamond_atr", 240, 600]
+    ["asd_labspec", "contact_probe_2cm", 3200, 4000],
+    ["asd_labspec", "clamp", 2400, 3200],
+    ["asd_labspec", "microprobe_03cm", 2400, 3200],
+    ["viavi_micronir", "direct_measurement", 3200, 4000],
+    ["viavi_micronir", "tablet_probe", 3200, 4000],
+    ["viavi_micronir", "vial_holder", 800, 1600],
+    ["viavi_micronir", "liquid_drop_adapter", 600, 1000],
+    ["bruker_tango", "direct_measurement", 3200, 4000],
+    ["bruker_tango", "cup_5cm", 1200, 2400],
+    ["bruker_tango", "cup_9cm", 1200, 2400],
+    ["bruker_tango", "vial_or_bottle", 800, 1600],
+    ["mir_perkin_elmer", "diamond_atr", 600, 1000]
   ];
   for (const [instrument, measurementDevice, min, max] of cases) {
     const result = quote([item("spectra_acquisition", { serviceMode: "plateau_operated", instrument, measurementDevice, halfDays: 10 })], { context: "" });
@@ -378,15 +383,15 @@ test("capacite MicroNIR mesure directe est indicative et non nulle", () => {
   })], { context: "" });
   const capacity = result.itemResults[0].estimatedSpectralCapacity;
   assert.equal(capacity.requiresValidation, true);
-  assert.equal(capacity.min, 80);
-  assert.equal(capacity.max, 160);
-  assert.deepEqual(capacity.ratePerHour, { min: 20, max: 40 });
+  assert.equal(capacity.min, 320);
+  assert.equal(capacity.max, 400);
+  assert.deepEqual(capacity.ratePerHour, { min: 80, max: 100 });
 });
 
 test("capacite spectrale MIR affichee en utilisation accompagnee", () => {
   const result = quote([item("spectra_acquisition", { serviceMode: "plateau_operated", instrument: "mir_perkin_elmer", measurementDevice: "diamond_atr", halfDays: 10 })], { context: "" });
-  assert.equal(result.itemResults[0].estimatedSpectralCapacity.min, 240);
-  assert.equal(result.itemResults[0].estimatedSpectralCapacity.max, 600);
+  assert.equal(result.itemResults[0].estimatedSpectralCapacity.min, 600);
+  assert.equal(result.itemResults[0].estimatedSpectralCapacity.max, 1000);
 });
 
 test("capacite spectrale ne pre-remplit pas les echantillons reels de calibration", () => {
@@ -394,6 +399,57 @@ test("capacite spectrale ne pre-remplit pas les echantillons reels de calibratio
   assert.equal(calibration.answers.samples, 12);
   assert.equal(calibration.answers.replicates, 2);
   assert.notEqual(calibration.answers.samples, 1000);
+});
+
+test("volume d’acquisition obligatoire, répétitions facultatives et absence d’effet tarifaire", () => {
+  const base = item("spectra_acquisition", { serviceMode: "plateau_operated", instrument: "asd_labspec", halfDays: 2 });
+  assert.equal(base.answers.replicates, 2);
+  for (const samples of [undefined, "", 0, -1, 1.5]) {
+    const errors = app.validateItem(config.prestations, base.requestType, { ...base.answers, samples });
+    assert.ok(errors.samples, String(samples));
+  }
+  const first = quote([base]);
+  const changed = quote([{ ...base, answers: { ...base.answers, samples: 1000, replicates: 10 } }]);
+  const emptyReplicates = quote([{ ...base, answers: { ...base.answers, replicates: "" } }]);
+  assert.equal(first.itemResults[0].status, "estimated");
+  assert.deepEqual(first.billedEstimate, changed.billedEstimate);
+  assert.deepEqual(first.billedEstimate, emptyReplicates.billedEstimate);
+  const exported = app.buildQuoteExport({ items: [base] }, first);
+  assert.equal(exported.configuredItems[0].answers.samples, 100);
+  assert.equal(exported.configuredItems[0].answers.replicates, 2);
+  const vm = app.buildPdfViewModel(config, { quoteId: "volume-test", requester: { unit: "AGAP" }, items: [base] }, first, { documentOptions: { storage: null, sequenceNumber: 1 } });
+  assert.match(vm.serviceSummaries[0], /100 échantillon\(s\) estimé\(s\)/);
+  assert.match(vm.serviceSummaries[0], /2 répétition\(s\)/);
+  assert.ok(vm.acquisitionClauses.includes(config.textes.acquisition.reservationReview));
+});
+
+test("migration des volumes historiques et re-sélection explicite de l’ancienne fibre ASD", () => {
+  const old = { instrument: "asd_labspec", measurementDevice: "optical_fiber", legacySpectraDetails: { samples: 42, replicates: 3 } };
+  const restored = app.restoreAcquisitionDetails(old);
+  assert.equal(restored.samples, 42);
+  assert.equal(restored.replicates, 3);
+  assert.equal(restored.measurementDevice, "");
+  assert.equal(restored.measurementDeviceNeedsReview, true);
+  assert.equal(old.measurementDevice, "optical_fiber");
+  const clean = app.pruneHiddenAnswers(config.prestations, "spectra_acquisition", restored);
+  assert.equal(clean.legacyMeasurementDevice, "optical_fiber");
+  assert.equal(clean.measurementDeviceNeedsReview, true);
+  assert.equal(clean.samples, 42);
+  assert.equal(clean.replicates, 3);
+});
+
+test("prédiction : limites et politique de restitution présentes dans le résumé, le JSON et le PDF", () => {
+  const prediction = item("existing_model_predictions");
+  const state = { quoteId: "prediction-test", requester: { unit: "AGAP" }, items: [prediction] };
+  const result = quote([prediction]);
+  const exported = app.buildQuoteExport(state, result);
+  const vm = app.buildPdfViewModel(config, state, result, { documentOptions: { storage: null, sequenceNumber: 1 } });
+  for (const note of [config.textes.prediction.conformity, config.textes.prediction.withoutReference, config.textes.prediction.releasePolicy]) {
+    assert.ok(result.warnings.includes(note));
+    assert.ok(exported.warnings.includes(note));
+    assert.ok(vm.predictionClauses.includes(note));
+    assert.ok(app.buildSummary(state, result, config).includes(note));
+  }
 });
 
 test("calibration ne demande plus si les analyses de reference existent", () => {
@@ -457,7 +513,7 @@ test("contextes appliques apres le cout technique instrument", () => {
     item("spectra_acquisition", { serviceMode: "plateau_operated", instrument: "mir_perkin_elmer", halfDays: 1 })
   ], { context: "partnership", project: { partnershipProjectName: "Projet" } });
   assert.equal(partnership.context.mode, "negotiated_partnership");
-  assert.equal(partnership.partnershipBreakdown.billedShare.min, 0.5);
+  assert.equal(partnership.partnershipBreakdown.billedShare.min, 1);
   assert.equal(partnership.partnershipBreakdown.billedShare.max, 1);
   assert.ok(partnership.partnershipBreakdown.offeredPersonnel.min > 0);
   assert.ok(partnership.partnershipBreakdown.negotiableBase.min > 0);
@@ -803,6 +859,187 @@ test("prediction ajoute la preparation et le nettoyage des donnees", () => {
   assert.equal(result.items.some((line) => line.id === "quality_control"), false);
 });
 
+test("chimie humide : tarifs par contexte, quantité fixée à 10 % arrondie au supérieur", () => {
+  const amounts = { internal_agap: 10, public_research_lab: 40, partnership: 20, subcontracting: 50 };
+  for (const [context, amount] of Object.entries(amounts)) {
+    const prediction = item("existing_model_predictions", {
+      predictionMode: "with_reference", spectra: 303, samples: 101, models: 3, referenceProperties: ["starch", "protein", "starch"]
+    });
+    const result = quote([prediction], { context, urgent: true });
+    const starch = result.items.find((line) => line.id === "prediction_reference_starch");
+    const protein = result.items.find((line) => line.id === "prediction_reference_protein");
+    assert.ok(starch, JSON.stringify(result.warnings));
+    assert.equal(result.items.filter((line) => line.configRule === "predictionReferenceAnalyses").length, 2);
+    assert.deepEqual(starch.referenceAnalysis.quantity, { min: 11, max: 11 });
+    assert.equal(starch.quantity, 11);
+    assert.equal(starch.quantityMax, 11);
+    assert.equal(starch.unitPriceMin, amount);
+    assert.equal(starch.unitPriceMax, amount);
+    assert.equal(starch.totalMin, 11 * amount);
+    assert.equal(starch.totalMax, 11 * amount);
+    assert.equal(starch.billedTotalMin, 11 * amount);
+    assert.equal(starch.billedTotalMax, 11 * amount);
+    assert.equal(protein.billedTotalMin, 550);
+    assert.equal(protein.billedTotalMax, 550);
+    assert.deepEqual(starch.contextCoefficient, { min: 1, max: 1 });
+    assert.equal(starch.discussionRangeRate, 0);
+    const without = quote([item("existing_model_predictions", { spectra: 303, models: 3 })], { context, urgent: true });
+    const urgency = (quote) => quote.items.filter((line) => line.id === "global_urgent_markup").map((line) => [line.totalMin, line.totalMax]);
+    assert.deepEqual(urgency(result), urgency(without), context);
+  }
+});
+
+test("chimie humide : nombre d’échantillons distinct des spectres et absence de double arrondi", () => {
+  for (const [samples, quantities] of [[1, [1, 1]], [11, [2, 2]], [70, [7, 7]], [100, [10, 10]]]) {
+    const result = quote([item("existing_model_predictions", {
+      predictionMode: "with_reference", spectra: 500, samples, referenceProperties: ["starch"]
+    })], { context: "internal_agap" });
+    const line = result.items.find((line) => line.id === "prediction_reference_starch");
+    assert.deepEqual([line.quantity, line.quantityMax], quantities, String(samples));
+  }
+});
+
+test("chimie humide : validation conditionnelle, autres propriétés sur devis et anciens brouillons", () => {
+  const base = item("existing_model_predictions", { predictionMode: "with_reference", samples: 100, spectra: 100, referenceProperties: ["starch"] });
+  for (const [field, value] of [["samples", ""], ["samples", 101], ["referenceProperties", []], ["referenceProperties", ["unknown"]], ["referenceProperties", ["starch", "protein"]]]) {
+    assert.ok(app.validateItem(config.prestations, base.requestType, { ...base.answers, [field]: value })[field]);
+  }
+  assert.deepEqual(app.validateItem(config.prestations, base.requestType, { ...base.answers, predictionMode: "without_reference", samples: "", referenceProperties: [] }), {});
+  const old = { ...base.answers };
+  delete old.predictionMode;
+  const restored = app.pruneHiddenAnswers(config.prestations, base.requestType, old);
+  assert.equal(restored.predictionMode, "without_reference");
+  assert.equal(restored.samples, undefined);
+  assert.equal(restored.referenceProperties, undefined);
+  const other = quote([item("existing_model_predictions", { predictionMode: "with_reference", samples: 100, referenceProperties: ["other"] })]);
+  assert.equal(other.status, "partial");
+  assert.equal(other.items.find((line) => line.id === "prediction_reference_other").pricingMode, "quote");
+});
+
+test("chimie humide : plafond de 100 échantillons vérifiés par propriété et par prestation", () => {
+  for (const [samples, expected] of [[999, [100, 100]], [1000, [100, 100]], [1500, [100, 100]], [2000, [100, 100]], [5000, [100, 100]]]) {
+    const result = quote([item("existing_model_predictions", {
+      predictionMode: "with_reference", samples, spectra: 6000, models: 2, referenceProperties: ["starch", "protein"]
+    })], { context: "partnership" });
+    const lines = result.items.filter((line) => line.referenceAnalysis);
+    assert.equal(lines.length, 2);
+    for (const line of lines) {
+      assert.deepEqual([line.quantity, line.quantityMax], expected);
+      assert.equal(line.referenceAnalysis.maxReferenceSamples, 100);
+    }
+  }
+});
+
+test("partenariat : une seule fourchette, pas de seconde réduction automatique", () => {
+  const result = quote([item("existing_model_predictions", { spectra: 1000 })], { context: "partnership" });
+  assert.deepEqual(result.partnershipBreakdown.billedShare, { min: 1, max: 1 });
+  assert.deepEqual(result.partnershipBreakdown.negotiatedReduction, { min: 0, max: 0 });
+  const line = result.items.find((entry) => entry.id === "existing_model_predictions");
+  assert.equal(line.billedTotalMin, line.technicalTotalMin);
+  assert.equal(line.billedTotalMax, line.technicalTotalMax);
+  assert.equal(result.billingRangeReview.required, false);
+});
+
+test("plafond global : aucun total présenté au-delà de ±15 %, les coûts ne sont jamais écrêtés", () => {
+  for (const context of ["internal_agap", "public_research_lab", "partnership", "subcontracting"]) {
+    for (const samples of [1, 11, 100, 1000, 2000, 5000]) {
+      const prediction = item("existing_model_predictions", { predictionMode: "with_reference", samples, spectra: Math.max(100, samples), models: 2, referenceProperties: ["starch", "protein"] });
+      const state = { quoteId: "range-check", context, requester: { unit: "AGAP" }, items: [prediction] };
+      const result = calculateQuote(config, state);
+      const exported = app.buildQuoteExport(state, result);
+      const rate = (result.billedEstimate.max - result.billedEstimate.min) / (result.billedEstimate.max + result.billedEstimate.min);
+      if (rate > 0.15 + 1e-12) {
+        assert.equal(result.status, "quote_required", `${context} / ${samples}`);
+        assert.equal(result.billingRangeReview.required, true);
+        assert.equal(exported.clientPricing.billedEstimate, null);
+        assert.equal(exported.totals.billedEstimate, null);
+        assert.deepEqual(exported.platformPricingAudit.billingRangeReview.computedEstimate, result.billedEstimate);
+        assert.match(app.buildSummary(state, result, config), /Montant à définir avec le plateau : Sur devis/);
+      } else {
+        assert.equal(result.billingRangeReview.required, false);
+        assert.equal(result.status, "estimated");
+        assert.deepEqual(exported.clientPricing.billedEstimate, result.billedEstimate);
+      }
+      const protein = result.items.find((line) => line.id === "prediction_reference_protein");
+      assert.equal(protein.billedTotalMin, protein.quantity * 50);
+      assert.equal(protein.billedTotalMax, protein.quantityMax * 50);
+    }
+  }
+});
+
+test("chimie humide : données tarifaires modifiables sans repli économique silencieux", () => {
+  const local = structuredClone(config);
+  local.tarifs.predictionReferenceAnalyses.samplingRate = { min: 0.12, max: 0.18 };
+  local.tarifs.predictionReferenceAnalyses.analyses.starch.contextAmounts.internal_agap = 13;
+  const state = { context: "internal_agap", items: [item("existing_model_predictions", { predictionMode: "with_reference", spectra: 100, samples: 100, referenceProperties: ["starch"] })] };
+  const result = calculateQuote(local, state);
+  const line = result.items.find((line) => line.id === "prediction_reference_starch");
+  assert.equal(line.billedTotalMin, 156);
+  assert.equal(line.billedTotalMax, 234);
+  assert.ok(result.warnings.some((text) => /12\s*% à 18\s*%/.test(text)));
+  delete local.tarifs.predictionReferenceAnalyses.analyses.starch.contextAmounts.internal_agap;
+  const missing = calculateQuote(local, state);
+  assert.equal(missing.itemResults[0].status, "incomplete");
+  assert.match(missing.itemResults[0].errors._global, /Tarif de référence starch/);
+});
+
+test("chimie humide à 10 % fixe : l’estimation reste chiffrée et les prestations s’additionnent sans surcoût", () => {
+  const prediction = item("existing_model_predictions", { predictionMode: "with_reference", spectra: 1000, samples: 1000, referenceProperties: ["starch"] });
+  const single = quote([prediction], { context: "partnership" });
+  assert.equal(single.status, "estimated");
+  assert.equal(single.billingRangeReview.required, false);
+  assert.deepEqual(single.billedEstimate, { min: 2575, max: 2725 });
+  const reference = single.items.find((line) => line.referenceAnalysis);
+  assert.deepEqual(reference.referenceAnalysis.samplingRate, { min: 0.1, max: 0.1 });
+  assert.equal(reference.billedTotalMin, 2000);
+  assert.equal(reference.billedTotalMax, 2000);
+  const duplicate = { ...prediction, id: "second-prediction" };
+  const combined = quote([prediction, duplicate], { context: "partnership" });
+  assert.equal(combined.status, "estimated");
+  assert.equal(combined.items.filter((line) => line.configRule === "externalAdministrativeFee").length, 1);
+  assert.deepEqual(combined.billedEstimate, { min: 5000, max: 5300 });
+});
+
+test("plafond global : le garde-fou reste actif si une autre règle dépasse ±15 %", () => {
+  const local = structuredClone(config);
+  local.tarifs.chemometrics.existing_model_predictions.discussionRangePolicy.rate = 0.5;
+  const state = { context: "partnership", items: [item("existing_model_predictions", { spectra: 1000 })] };
+  const result = calculateQuote(local, state);
+  assert.equal(result.status, "quote_required");
+  assert.equal(result.billingRangeReview.required, true);
+  assert.deepEqual(result.billingRangeReview.computedEstimate, { min: 400, max: 900 });
+  assert.equal(app.buildQuoteExport(state, result).clientPricing.billedEstimate, null);
+});
+
+test("chimie humide : PDF, JSON et classeur plateau conservent hypothèses et détails", () => {
+  const prediction = item("existing_model_predictions", { predictionMode: "with_reference", samples: 100, referenceProperties: ["starch"] });
+  const state = { quoteId: "reference-test", context: "partnership", requester: { unit: "AGAP" }, items: [prediction] };
+  const result = calculateQuote(config, state);
+  const exported = app.buildQuoteExport(state, result);
+  assert.equal(exported.configuredItems[0].answers.samples, 100);
+  const ref = exported.items.find((line) => line.referenceAnalysis);
+  assert.deepEqual(ref.referenceAnalysis.quantity, { min: 10, max: 10 });
+  assert.equal(ref.referenceAnalysis.unitPrice, 20);
+  const vm = app.buildPdfViewModel(config, state, result, { documentOptions: { storage: null, sequenceNumber: 1 } });
+  assert.ok(vm.predictionClauses.some((text) => /sur 10\s*%/.test(text)));
+  assert.ok(!vm.predictionClauses.includes(config.textes.prediction.withoutReference));
+  assert.ok(vm.services.some((line) => /10 analyses pour 100/.test(line.description)));
+  const workbook = app.buildPlatformWorkbookModel(config, state, result, exported);
+  assert.ok(workbook.lines.some((line) => /10 analyses pour 100/.test(line.description)));
+  const notice = app.predictionNotes(config, prediction.answers)[1];
+  for (const text of ["en amont", "à l’issue du diagnostic", "nouveaux spectres (X)", "nouvelles valeurs de référence (Y)", "validée avec le demandeur"]) {
+    assert.ok(notice.includes(text), text);
+  }
+  assert.ok(result.warnings.includes(notice));
+  assert.ok(exported.warnings.includes(notice));
+  assert.ok(vm.predictionClauses.includes(notice));
+  assert.ok(app.buildSummary(state, result, config).includes(notice));
+  assert.ok(workbook.quoteRows.some((row) => row.includes(notice)));
+  assert.doesNotMatch(notice, /10\s*% à 10\s*%|5\s*%/);
+  assert.doesNotMatch(ref.reason, /10 à 10 analyses/);
+  assert.doesNotMatch(app.buildPlatformCsv(workbook), /\[object Object\]/);
+});
+
 test("ancien controle des valeurs aberrantes migre vers le nettoyage des donnees", () => {
   const result = quote([
     item("existing_model_predictions", {
@@ -931,9 +1168,9 @@ test("modele PDF reprend reference client plateau forfait et logo Bioch", () => 
   assert.ok(vm.contextRows.some(([label, value]) => label === "Référence projet" && value === "AGAP-26-01"));
   assert.equal(vm.contextRows.some(([label]) => label === "Implication prévue de Bioch&SPIR"), false);
   assert.ok(vm.partnershipBreakdown);
-  assert.ok(vm.serviceSummaries.some((line) => /Prendre des spectres - spectromètre Bruker TANGO II - sonde\/dispositif Coupelle 9 cm - 64 à 144 spectres indicatifs/.test(line)));
+  assert.ok(vm.serviceSummaries.some((line) => /Prendre des spectres - spectromètre Bruker TANGO II - sonde\/dispositif Coupelle 9 cm - 100 échantillon\(s\) estimé\(s\) - 2 répétition\(s\) spectrale\(s\) par échantillon - 240 à 480 spectres indicatifs/.test(line)));
   assert.ok(vm.serviceSummaries.some((line) => /Calibrer - 3 propriétés - 120 échantillons indépendants × 2 répétitions = 240 spectres/.test(line)));
-  assert.ok(vm.serviceSummaries.some((line) => /Entretenir - Transférer vers un autre spectromètre/.test(line)));
+  assert.ok(vm.serviceSummaries.some((line) => /Vérifier et adapter un modèle - Transférer vers un autre spectromètre/.test(line)));
   assert.equal(vm.totals.contextId, "partnership");
 });
 
@@ -958,10 +1195,10 @@ test("export JSON expose le contexte partenariat et sa repartition", () => {
   const exported = app.buildQuoteExport(state, result);
   assert.equal(exported.context.id, "partnership");
   assert.equal(exported.context.mode, "negotiated_partnership");
-  assert.deepEqual(exported.context.billedShare, { min: 0.5, max: 1 });
+  assert.deepEqual(exported.context.billedShare, { min: 1, max: 1 });
   assert.equal(exported.context.requiresDiscussion, true);
   assert.equal("biochSpirInvolvement" in exported.project, false);
-  assert.ok(exported.partnershipBreakdown.inKindContribution.max > 0);
+  assert.deepEqual(exported.partnershipBreakdown.inKindContribution, { min: 0, max: 0 });
 });
 
 test("export JSON entretien conserve commentaire et audit de fourchette standard", () => {
@@ -1181,4 +1418,54 @@ test("aucun champ public masque d'entretien ne peut bloquer", () => {
   assert.match(pruned.maintenanceComment, /Spectromètre source : bruker_tango/);
   assert.equal(pruned.legacyMaintenanceAnswers.sourceInstrument, "bruker_tango");
   assert.deepEqual(app.validateItem(config.prestations, "model_maintenance", pruned), {});
+});
+
+test("audit : les prix unitaires facturés et les traitements suivent le contexte final", () => {
+  for (const context of ["internal_agap", "public_research_lab", "partnership", "subcontracting"]) {
+    const result = quote([item("existing_model_predictions", { spectra: 1000 })], { context });
+    const line = result.items.find((entry) => entry.id === "existing_model_predictions");
+    assert.equal(line.billedUnitPriceMin * line.quantity, line.billedTotalMin, context);
+    assert.equal(line.billedUnitPriceMax * line.quantity, line.billedTotalMax, context);
+    assert.equal(line.partnershipTreatment, context === "partnership" ? "negotiated" : "context_coefficient");
+    const maintenance = quote([item("model_maintenance", { maintenanceType: "performance_audit" })], { context });
+    assert.equal(maintenance.pricingAudit.maintenance[0].partnershipTreatment, context === "partnership" ? "negotiated" : "context_coefficient");
+  }
+  const person = operator("viavi_micronir", "untrained", "");
+  const result = quote([item("spectra_acquisition", { operators: [person] })], { context: "partnership", people: [person] });
+  const training = result.items.find((line) => line.configRule === "instrumentTraining");
+  assert.equal(training.billedUnitPriceMin, 0);
+  assert.equal(training.billedUnitPriceMax, 0);
+  assert.equal(training.partnershipTreatment, "offered");
+});
+
+test("audit : le total facturé est la somme des lignes arrondies du pré-devis", () => {
+  for (const context of ["internal_agap", "public_research_lab", "partnership", "subcontracting"]) {
+    const result = quote([item("existing_model_predictions"), item("existing_model_predictions")], { context });
+    const sum = result.items.filter((line) => line.pricingMode !== "quote").reduce((sum, line) => ({ min: sum.min + line.billedTotalMin, max: sum.max + line.billedTotalMax }), { min: 0, max: 0 });
+    assert.deepEqual(result.billedEstimate, sum, context);
+    assert.deepEqual(result.pricingAudit.billedEstimate, sum, context);
+    if (result.partnershipBreakdown) assert.deepEqual(result.partnershipBreakdown.billedEstimate, sum);
+    for (const item of result.itemResults) {
+      const lines = result.items.filter((line) => line.parentItemId === item.itemId && line.pricingMode !== "quote");
+      assert.equal(item.billedEstimate.min, lines.reduce((sum, line) => sum + line.billedTotalMin, 0));
+      assert.equal(item.billedEstimate.max, lines.reduce((sum, line) => sum + line.billedTotalMax, 0));
+    }
+  }
+});
+
+test("audit : les champs numériques nécessaires à la prédiction ne sont pas facultatifs", () => {
+  for (const predictionMode of ["without_reference", "with_reference"]) {
+    const base = item("existing_model_predictions", { predictionMode, samples: 100, referenceProperties: ["starch"] });
+    for (const field of ["spectra", "models"]) {
+      assert.ok(app.validateItem(config.prestations, base.requestType, { ...base.answers, [field]: "" })[field], `${predictionMode} / ${field}`);
+    }
+  }
+});
+
+test("audit : le CSV protège les textes contre les formules sans altérer les nombres", () => {
+  const csv = app.buildPlatformCsv({ lines: [{ comment: "=1+1", amount: -12 }] });
+  assert.match(csv, /\r\n'=1\+1;-12$/);
+  for (const text of ["+SUM(1)", "-cmd", "@SUM(1)", "\t=1+1"]) {
+    assert.ok(app.buildPlatformCsv({ lines: [{ comment: text }] }).includes(`'${text}`));
+  }
 });

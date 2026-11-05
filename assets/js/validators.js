@@ -47,7 +47,8 @@
       if (field.type === "number") {
         if (!required && empty) continue;
         const number = Number(value);
-        if (!Number.isFinite(number)) errors[field.id] = "Saisissez un nombre valide.";
+        if (required && empty) errors[field.id] = `Complétez le champ « ${field.label} ».`;
+        else if (!Number.isFinite(number)) errors[field.id] = "Saisissez un nombre valide.";
         else if (field.min !== undefined && number < field.min) errors[field.id] = `La valeur minimale est ${field.min}.`;
         else if (field.max !== undefined && number > field.max) errors[field.id] = `La valeur maximale est ${field.max}.`;
         else if (field.integer && !Number.isInteger(number)) errors[field.id] = "Saisissez un entier.";
@@ -56,6 +57,11 @@
         errors[field.id] = field.id === "measurementDevice"
           ? "Choisissez une sonde ou un dispositif de mesure."
           : "Choisissez une option.";
+      }
+      if (field.type === "checkboxList") {
+        const values = Array.isArray(value) ? value : [];
+        if (required && !values.length) errors[field.id] = "Sélectionnez au moins une propriété.";
+        else if (field.options && values.some((entry) => !field.options.some((option) => option.value === entry))) errors[field.id] = "Sélectionnez une propriété proposée.";
       }
       if ((field.type === "text" || field.type === "email" || field.type === "date" || field.type === "textarea") && required && !String(value || "").trim()) {
         errors[field.id] = `Complétez le champ « ${field.label} ».`;
@@ -82,6 +88,14 @@
       const instrument = globalThis.NIRS_CONFIG?.tarifs?.instruments?.[answers.instrument] || {};
       if (instrument.transportPolicy === "forbidden" && answers.measurementLocation === "transport_required") {
         errors.measurementLocation = "Ce spectromètre est utilisé uniquement au laboratoire Bioch&SPIR.";
+      }
+    }
+    if (requestType === "existing_model_predictions") {
+      if (!["without_reference", "with_reference"].includes(normalizedAnswers.predictionMode)) errors.predictionMode = "Choisissez un mode de vérification.";
+      if (normalizedAnswers.predictionMode === "with_reference") {
+        if (Number(normalizedAnswers.samples) > Number(normalizedAnswers.spectra)) errors.samples = "Le nombre d’échantillons indépendants ne peut pas dépasser le nombre de spectres.";
+        const properties = Array.isArray(normalizedAnswers.referenceProperties) ? normalizedAnswers.referenceProperties : [];
+        if (new Set(properties).size > Number(normalizedAnswers.models)) errors.referenceProperties = "Le nombre de propriétés à vérifier ne peut pas dépasser le nombre de propriétés ou modèles à prédire.";
       }
     }
     if (requestType === "model_maintenance") {
@@ -277,6 +291,11 @@
     if (requestType === "spectra_acquisition" && migrated.measurementDeviceByInstrument) {
       next.measurementDeviceByInstrument = migrated.measurementDeviceByInstrument;
     }
+    if (requestType === "spectra_acquisition") {
+      for (const key of ["legacyMeasurementDevice", "measurementDeviceNeedsReview"]) {
+        if (migrated[key] !== undefined) next[key] = migrated[key];
+      }
+    }
     if (requestType === "initial_training" && Array.isArray(migrated.participantIds)) {
       next.participantIds = migrated.participantIds;
       next.people = migrated.participantIds.length || next.people;
@@ -293,7 +312,8 @@
   }
 
   function migrateLegacyAnswers(requestType, answers) {
-    const next = { ...(answers || {}) };
+    const next = requestType === "spectra_acquisition"
+      ? NIRSApp.restoreAcquisitionDetails(answers || {}) : { ...(answers || {}) };
     if (requestType === "spectra_acquisition") {
       if ((next.samples !== undefined || next.replicates !== undefined) && !next.legacySpectraDetails) {
         next.legacySpectraDetails = {
@@ -315,8 +335,9 @@
         next.transportMigrationWarning = "Ancien transport supprimé : mesures réalisées uniquement au laboratoire Bioch&SPIR.";
       }
     }
-    if (requestType === "existing_model_predictions" && next.outlierCheck === true) {
-      next.dataPreparationRequired = true;
+    if (requestType === "existing_model_predictions") {
+      if (next.predictionMode === undefined) next.predictionMode = "without_reference";
+      if (next.outlierCheck === true) next.dataPreparationRequired = true;
     }
     if (requestType === "model_maintenance") {
       const previousType = next.maintenanceType;
@@ -484,10 +505,27 @@
       }
     }
     if (answers.halfDays) labels.push(`${answers.halfDays} demi-journée(s)`);
+    if (requestType === "spectra_acquisition") {
+      if (migrated.samples) labels.push(`${migrated.samples} échantillon(s) estimé(s)`);
+      if (migrated.replicates) labels.push(`${migrated.replicates} répétition(s) spectrale(s) par échantillon`);
+    }
     if (answers.measurementDevice && config.tarifs.spectralThroughputProfiles?.[instrumentId]?.[answers.measurementDevice]) {
       labels.push(config.tarifs.spectralThroughputProfiles[instrumentId][answers.measurementDevice].label);
     }
     if (answers.spectra) labels.push(`${answers.spectra} spectres`);
+    if (requestType === "existing_model_predictions") {
+      const modeField = requestFields(config.prestations, requestType).find((field) => field.id === "predictionMode");
+      const mode = modeField?.options.find((option) => option.value === migrated.predictionMode);
+      if (mode) labels.push(mode.label);
+      if (migrated.predictionMode === "with_reference") {
+        labels.push(`${migrated.samples || "à compléter"} échantillon(s) indépendant(s)`);
+        const properties = requestFields(config.prestations, requestType).find((field) => field.id === "referenceProperties");
+        (Array.isArray(migrated.referenceProperties) ? migrated.referenceProperties : []).forEach((value) => {
+          const property = properties.options.find((option) => option.value === value);
+          if (property) labels.push(property.label);
+        });
+      }
+    }
     if (answers.properties) labels.push(`${answers.properties} propriété(s)`);
     if (answers.models) labels.push(`${answers.models} modèle(s)`);
     if (answers.comment) labels.push(String(answers.comment).trim().slice(0, 120));

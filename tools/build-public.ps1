@@ -8,8 +8,9 @@ $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 $target = Join-Path $root $OutputDir
 $targetFull = [System.IO.Path]::GetFullPath($target)
 $rootFull = [System.IO.Path]::GetFullPath($root)
+$rootPrefix = $rootFull.TrimEnd([char[]]@('\', '/')) + [System.IO.Path]::DirectorySeparatorChar
 
-if (-not $targetFull.StartsWith($rootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
+if (-not $targetFull.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
   throw "Le dossier de sortie doit rester dans le projet."
 }
 

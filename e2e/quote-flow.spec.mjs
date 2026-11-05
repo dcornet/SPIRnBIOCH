@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { writeFile } from "node:fs/promises";
 
-const CAPACITY_HELP = "Les cadences sont indicatives et incluent le nommage des spectres, la traçabilité manuelle, la manipulation des échantillons, le nettoyage courant et l’amortissement du temps de mise en route sur une demi-journée. En cas de préparation spécifique ou de nettoyage approfondi, la cadence doit être réduite.";
+const CAPACITY_HELP = "Les cadences sont indicatives. Elles varient selon l’expérience de l’opérateur, la présentation et la nature de la matrice, ainsi que les manipulations, le repositionnement et le nettoyage nécessaires. Par exemple, des arachides entières et une pâte d’arachide ne se mesurent pas à la même cadence.";
 
 function collectBrowserErrors(page) {
   const errors = [];
@@ -63,6 +64,11 @@ async function addCardAndGoToConfig(page, cardId) {
   await page.locator("[data-go-config]").click();
   await expect(page.getByRole("heading", { name: "Configurer les prestations" })).toBeVisible();
   await expect(page.locator("[data-panel-body]").first()).toBeVisible();
+  const samples = page.locator('input[name="samples"]');
+  if (cardId.startsWith("spectra_") && await samples.count()) {
+    await samples.fill("100");
+    await samples.dispatchEvent("change");
+  }
 }
 
 async function configureCapacity(page, deviceId, halfDays) {
@@ -340,18 +346,18 @@ test("navigation, ordre du catalogue et capacité LabSpec", async ({ page }, tes
   const categories = await page.locator(".service-category h3").allTextContents();
   expect(categories).toEqual(["Prendre des spectres", "Chimiométrie", "Me former"]);
   const trainingCategory = page.locator(".service-category--training");
-  await expect(trainingCategory.getByText("Module en préparation")).toBeVisible();
+  await expect(trainingCategory).toContainText("Formations théoriques");
   await expect(trainingCategory.locator("[data-add-card]")).toHaveCount(0);
 
   await addCardAndGoToConfig(page, "spectra_asd_labspec");
   await expectSingleCurrentStep(page, "Configurer les prestations");
   await expect(page.locator(".progress [data-step-target]").nth(1)).toHaveClass(/is-complete/);
-  await expect(page.getByLabel("Sonde ou dispositif de mesure")).toHaveText(/Pince.*Fibre optique/s);
+  await expect(page.getByLabel("Sonde ou dispositif de mesure")).toHaveText(/Sonde de contact 2 cm.*Pince à feuille.*Microsonde 0,3 cm/s);
 
   await configureCapacity(page, "clamp", 10);
-  await expect(page.getByText(/Quantité de spectres indicative : 480 à 1\s?000 spectres\./)).toBeVisible();
-  await expect(page.getByText("Zone circulaire d’environ 10 mm de diamètre.")).toBeVisible();
-  await expect(page.getByText("10 demi-journée(s) × 4 heures × 12 à 25 spectres par heure")).toBeVisible();
+  await expect(page.getByText(/Quantité de spectres indicative : 2\s?400 à 3\s?200 spectres\./)).toBeVisible();
+  await expect(page.getByText("Pince adaptée à la mesure des feuilles.")).toBeVisible();
+  await expect(page.getByText("10 demi-journée(s) × 4 heures × 60 à 80 spectres par heure")).toBeVisible();
 
   const tooltipButton = page.locator(".spectral-capacity .help-tooltip-trigger");
   await tooltipButton.click();
@@ -368,7 +374,7 @@ test("capacité MicroNIR goutte", async ({ page }, testInfo) => {
 
   await expect(page.getByLabel("Sonde ou dispositif de mesure")).toHaveText(/Mesure directe sans adaptateur.*Sonde à comprimé.*Support pour vial.*Adaptateur pour liquide — goutte/s);
   await configureCapacity(page, "liquid_drop_adapter", 10);
-  await expect(page.getByText(/Quantité de spectres indicative : 240 à 480 spectres\./)).toBeVisible();
+  await expect(page.getByText(/Quantité de spectres indicative : 600 à 1\s?000 spectres\./)).toBeVisible();
   await expect(page.getByText("Petite zone couverte par une goutte déposée sur la fenêtre de mesure.")).toBeVisible();
 
   await expectNoBrowserErrors(errors);
@@ -381,9 +387,9 @@ test("capacité MicroNIR mesure directe n'affiche pas zero spectre par heure", a
   await addCardAndGoToConfig(page, "spectra_viavi_micronir");
 
   await configureCapacity(page, "direct_measurement", 1);
-  await expect(page.getByText(/Quantité de spectres indicative : 80 à 160 spectres\./)).toBeVisible();
+  await expect(page.getByText(/Quantité de spectres indicative : 320 à 400 spectres\./)).toBeVisible();
   await expect(page.locator(".spectral-capacity")).not.toContainText("0 à 0");
-  await expect(page.locator(".spectral-capacity")).toContainText("1 demi-journée(s) × 4 heures × 20 à 40 spectres par heure");
+  await expect(page.locator(".spectral-capacity")).toContainText("1 demi-journée(s) × 4 heures × 80 à 100 spectres par heure");
 
   await expectNoBrowserErrors(errors);
 });
@@ -394,9 +400,9 @@ test("capacité TANGO coupelle", async ({ page }, testInfo) => {
   await continueToCatalog(page);
   await addCardAndGoToConfig(page, "spectra_bruker_tango");
 
-  await expect(page.getByLabel("Sonde ou dispositif de mesure")).toHaveText(/Mesure directe.*Coupelle 5 cm.*Coupelle 9 cm.*Pilulier ou flacon/s);
+  await expect(page.getByLabel("Sonde ou dispositif de mesure")).toHaveText(/Mesure directe.*Coupelle 5 cm.*Coupelle 9 cm.*Pilulier/s);
   await configureCapacity(page, "cup_9cm", 10);
-  await expect(page.getByText(/Quantité de spectres indicative : 320 à 720 spectres\./)).toBeVisible();
+  await expect(page.getByText(/Quantité de spectres indicative : 1\s?200 à 2\s?400 spectres\./)).toBeVisible();
   await expect(page.getByText("Zone instrumentale d’environ 10 mm ; la surface effective est plus grande lorsque la coupelle tourne.")).toBeVisible();
 
   await expectNoBrowserErrors(errors);
@@ -410,7 +416,7 @@ test("capacité MIR ATR", async ({ page }, testInfo) => {
 
   await expect(page.getByLabel("Sonde ou dispositif de mesure")).toHaveText(/ATR diamant/);
   await configureCapacity(page, "diamond_atr", 10);
-  await expect(page.getByText(/Quantité de spectres indicative : 240 à 600 spectres\./)).toBeVisible();
+  await expect(page.getByText(/Quantité de spectres indicative : 600 à 1\s?000 spectres\./)).toBeVisible();
   await expect(page.getByText("Zone de contact de quelques millimètres, selon le cristal ATR.")).toBeVisible();
 
   await expectNoBrowserErrors(errors);
@@ -427,7 +433,7 @@ test("PerkinElmer initialise automatiquement l'ATR et affiche sous-total et capa
 
   await expect(page.locator('[data-item-status]').first()).toHaveText("Complète");
   await expect(page.locator('[data-item-summary]').first()).toContainText("ATR diamant");
-  await expect(page.getByText(/Quantité de spectres indicative : 240 à 600 spectres\./)).toBeVisible();
+  await expect(page.getByText(/Quantité de spectres indicative : 600 à 1\s?000 spectres\./)).toBeVisible();
   await expect(page.locator(".item-subtotal strong").first()).toHaveText("3 408 € - 4 611 €");
 
   await expectNoBrowserErrors(errors);
@@ -451,7 +457,7 @@ test("scénarios navigateur du modèle de coût instrument", async ({ page }, te
       urgent: false,
       urgentSource: "none",
       people: [],
-      items: [{ id: "item-1", requestType: "spectra_acquisition", answers: { requestType: "spectra_acquisition", ...answers }, completed: true }]
+      items: [{ id: "item-1", requestType: "spectra_acquisition", answers: { requestType: "spectra_acquisition", samples: 100, ...answers }, completed: true }]
     });
     const micronir = calculate({
       serviceMode: "autonomous_supported",
@@ -639,7 +645,186 @@ test("prediction affiche le nettoyage sans bloc donnees disponibles", async ({ p
   await expect(panel.getByText("Contrôle des valeurs aberrantes")).toHaveCount(0);
   await expect(panel.getByLabel("Spectres déjà acquis")).toBeVisible();
   await expect(panel.getByLabel("Préparation et nettoyage des données")).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "Fiabilité et domaine d’application des prédictions" })).toBeVisible();
+  await expect(panel).toContainText("la justesse des valeurs prédites n’est pas vérifiée expérimentalement");
+  await expect(panel).toContainText("suspendre la restitution");
 
+  await expectNoBrowserErrors(errors);
+});
+
+test("volumes d’acquisition, tarif inchangé et reprise complète du brouillon", async ({ page }, testInfo) => {
+  const errors = collectBrowserErrors(page);
+  await page.goto(testInfo.project.use.baseURL, { waitUntil: "domcontentloaded" });
+  await continueToCatalog(page, "public_research_lab");
+  await page.locator('[data-add-card="spectra_asd_labspec"]').click();
+  await page.locator('[data-go-config]').click();
+  await page.locator('input[data-field-id="serviceMode"][value="plateau_operated"]').check();
+  const halfDays = page.getByLabel("Nombre de demi-journées réservées");
+  const samples = page.getByLabel("Nombre estimé d’échantillons indépendants");
+  const replicates = page.getByLabel("Répétitions spectrales par échantillon", { exact: true });
+  await expect(halfDays).toHaveAttribute("required", "");
+  await expect(samples).toHaveAttribute("aria-required", "true");
+  await expect(samples).toHaveValue("");
+  await expect(replicates).toHaveValue("2");
+  await expect(page.getByRole("button", { name: "Continuer" })).toBeDisabled();
+  await samples.fill("48");
+  await samples.dispatchEvent("change");
+  const amount = await page.locator("#live-estimate strong").first().textContent();
+  await samples.fill("120");
+  await samples.dispatchEvent("change");
+  await replicates.fill("3");
+  await replicates.dispatchEvent("change");
+  await expect(page.locator("#live-estimate strong").first()).toHaveText(amount);
+  await expect(page.locator('.field-section').filter({ has: samples })).toContainText("vaisselle ou d’aspiration");
+  await page.screenshot({ path: testInfo.outputPath("volume-desktop.png"), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: testInfo.outputPath("volume-mobile.png"), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Reprendre le brouillon" }).click();
+  await expect(samples).toHaveValue("120");
+  await expect(replicates).toHaveValue("3");
+  await progressStep(page, "Votre demande").click();
+  await expect(page.locator('[data-requester-field="email"]')).toHaveValue("alice.martin@example.test");
+  await expect(page.locator('input[name="context"][value="public_research_lab"]')).toBeChecked();
+  await expectNoBrowserErrors(errors);
+});
+
+test("une fibre ASD historique exige de choisir une sonde sans perdre les volumes", async ({ page }, testInfo) => {
+  const errors = collectBrowserErrors(page);
+  await page.addInitScript(() => localStorage.setItem("nirs_spir_quote_draft_v2", JSON.stringify({
+    schemaVersion: 8, currentStep: 3, context: "internal_agap", people: [],
+    items: [{ id: "legacy-asd", requestType: "spectra_acquisition", answers: {
+      instrument: "asd_labspec", serviceMode: "plateau_operated", halfDays: 1,
+      measurementDevice: "optical_fiber", legacySpectraDetails: { samples: 42, replicates: 3 }
+    } }]
+  })));
+  await page.goto(testInfo.project.use.baseURL, { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Reprendre le brouillon" }).click();
+  await expect(page.getByLabel("Sonde ou dispositif de mesure")).toHaveValue("");
+  await expect(page.getByText(/L’ancien dispositif « fibre optique »/)).toBeVisible();
+  await expect(page.getByLabel("Nombre estimé d’échantillons indépendants")).toHaveValue("42");
+  await page.getByLabel("Sonde ou dispositif de mesure").selectOption("microprobe_03cm");
+  await expect(page.getByText(/L’ancien dispositif « fibre optique »/)).toHaveCount(0);
+  await expect(page.locator(".spectral-capacity")).toContainText("240 à 320 spectres");
+  await expectNoBrowserErrors(errors);
+});
+
+for (const extraPredictions of [0, 18]) {
+test(`PDF conserve les volumes et les réserves scientifiques de prédiction${extraPredictions ? " sur vingt prestations" : ""}`, async ({ page }, testInfo) => {
+  const errors = collectBrowserErrors(page);
+  await openApp(page, testInfo);
+  await page.evaluate(() => globalThis.NIRSApp.loadScriptOnce("./vendor/jspdf.umd.min.js", "jspdf"));
+  const generated = await page.evaluate((extraPredictions) => {
+    const app = globalThis.NIRSApp;
+    const config = globalThis.NIRS_CONFIG;
+    const state = {
+      quoteId: "document-nirs-ms", context: "internal_agap", urgent: false, people: [],
+      requester: { firstName: "Alice", lastName: "Martin", unit: "AGAP", email: "alice@example.test", organization: "CIRAD" },
+      project: { title: "Contrôle d’un lot d’arachides", plannedStartDate: "2027-01-11", plannedEndDate: "2027-01-12" },
+      items: [
+        { id: "spectra", requestType: "spectra_acquisition", answers: { ...app.defaultAnswersForRequest(config.prestations, "spectra_acquisition"), instrument: "asd_labspec", measurementDevice: "contact_probe_2cm", serviceMode: "plateau_operated", halfDays: 2, samples: 120, replicates: 2 } },
+        { id: "predict", requestType: "existing_model_predictions", answers: { ...app.defaultAnswersForRequest(config.prestations, "existing_model_predictions"), predictionMode: "with_reference", samples: 120, referenceProperties: ["starch", "protein"], models: 2, spectra: 240, comment: "Modèles amidon et protéines à vérifier sur une nouvelle campagne d’arachides." } }
+      ]
+    };
+    for (let index = 0; index < extraPredictions; index += 1) {
+      state.items.push({ ...structuredClone(state.items[1]), id: `prediction-${index}` });
+    }
+    const result = app.calculateQuote(config, state);
+    const vm = app.buildPdfViewModel(config, state, result);
+    const originalPdf = globalThis.jspdf.jsPDF;
+    const records = [];
+    globalThis.jspdf.jsPDF = function (...args) {
+      const doc = new originalPdf(...args);
+      const drawText = doc.text.bind(doc);
+      doc.text = function (text, x, y, options = {}) {
+        const size = doc.getFontSize();
+        const lines = Array.isArray(text) ? text : String(text).split("\n");
+        lines.forEach((line, index) => {
+          if (!String(line).trim()) return;
+          const width = doc.getTextWidth(line);
+          const left = options.align === "right" ? x - width : x;
+          records.push({ text: line, left, right: left + width, baseline: y + index * size * 0.3528 * (options.lineHeightFactor || doc.getLineHeightFactor()), size, page: doc.internal.getCurrentPageInfo().pageNumber });
+        });
+        return drawText(text, x, y, options);
+      };
+      return doc;
+    };
+    try {
+      const pdf = app.createPdfA4(state, result, config);
+      const overlaps = [];
+      records.forEach((a, index) => records.slice(index + 1).forEach((b) => {
+        if (a.page === b.page && Math.abs(a.baseline - b.baseline) < Math.min(a.size, b.size) * 0.3528 * 0.75 && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.2) overlaps.push([a.text, b.text]);
+      }));
+      return { data: pdf.output("datauristring").split(",")[1], pages: pdf.getNumberOfPages(), summaries: vm.serviceSummaries, clauses: vm.predictionClauses, overlaps, outOfBounds: records.filter((record) => record.left < 10 || record.right > 200 || record.baseline > 274) };
+    } finally {
+      globalThis.jspdf.jsPDF = originalPdf;
+    }
+  }, extraPredictions);
+  expect(generated.pages).toBeGreaterThan(0);
+  if (extraPredictions) expect(generated.pages).toBeGreaterThan(2);
+  expect(generated.summaries[0]).toContain("120 échantillon(s) estimé(s)");
+  expect(generated.clauses).toHaveLength(3);
+  expect(generated.overlaps).toEqual([]);
+  expect(generated.outOfBounds).toEqual([]);
+  const pdfPath = testInfo.outputPath("predevis-nirs-ms.pdf");
+  await writeFile(pdfPath, Buffer.from(generated.data, "base64"));
+  await testInfo.attach("predevis-nirs-ms.pdf", { path: pdfPath, contentType: "application/pdf" });
+  await expectNoBrowserErrors(errors);
+});
+}
+
+test("deux offres de prédiction, références en chimie humide et reprise du brouillon", async ({ page }, testInfo) => {
+  const errors = collectBrowserErrors(page);
+  await page.goto(testInfo.project.use.baseURL, { waitUntil: "domcontentloaded" });
+  await continueToCatalog(page, "partnership");
+  await expect(page.locator('.service-card h4', { hasText: "Prédire sans analyses de référence" })).toBeVisible();
+  await expect(page.locator('.service-card h4', { hasText: "Prédire avec analyses de référence" })).toBeVisible();
+  await addCardAndGoToConfig(page, "predict_with_reference");
+  await expect(page.locator('input[data-field-id="predictionMode"][value="with_reference"]')).toBeChecked();
+  await page.locator('input[name="spectra"]').fill("300");
+  await page.locator('input[name="spectra"]').dispatchEvent("change");
+  await page.locator('input[name="models"]').fill("2");
+  await page.locator('input[name="models"]').dispatchEvent("change");
+  await page.getByLabel("Nombre d’échantillons indépendants à prédire").fill("100");
+  await page.getByLabel("Nombre d’échantillons indépendants à prédire").dispatchEvent("change");
+  await page.getByLabel("Amidon", { exact: true }).check();
+  await page.getByLabel("Protéines", { exact: true }).check();
+  const comment = page.getByLabel("Informations utiles pour préparer la discussion");
+  await comment.fill("Prédictions amidon et protéines sur 100 échantillons indépendants, avec trois spectres par échantillon.");
+  await comment.dispatchEvent("change");
+  await expect(page.getByRole("button", { name: "Continuer" })).toBeEnabled();
+  await expect(page.locator('[data-panel-body]')).toContainText(/sur 10\s*%/);
+  await expect(page.locator('[data-panel-body]')).toContainText("plafonnés à 100 échantillons");
+  await expect(page.locator('[data-panel-body]')).toContainText("discuté en amont");
+  await expect(page.locator('[data-panel-body]')).toContainText("nouveaux spectres (X)");
+  await expect(page.locator('[data-panel-body]')).toContainText("nouvelles valeurs de référence (Y)");
+  await expect(page.locator('[data-panel-body]')).toContainText("validée avec le demandeur");
+  await expect(page.locator('[data-panel-body]')).not.toContainText("la justesse des valeurs prédites n’est pas vérifiée expérimentalement");
+  await page.screenshot({ path: testInfo.outputPath("prediction-references-desktop.png"), fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: testInfo.outputPath("prediction-references-mobile.png"), fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Reprendre le brouillon" }).click();
+  await expect(page.getByLabel("Nombre d’échantillons indépendants à prédire")).toHaveValue("100");
+  await expect(page.getByLabel("Amidon", { exact: true })).toBeChecked();
+  await expect(page.getByLabel("Protéines", { exact: true })).toBeChecked();
+  await page.getByRole("button", { name: "Continuer" }).click();
+  await expect(page.locator('.table-wrap')).toContainText(/Chimie humide.*amidon/);
+  await expect(page.locator('.table-wrap')).toContainText("10 analyses pour 100 échantillons indépendants");
+  await expect(page.locator('#live-estimate strong').first()).not.toHaveText("Sur devis");
+  await expect(page.locator('.warning-list')).toContainText("nouveaux spectres (X)");
+  await expect(page.locator('.warning-list')).toContainText("nouvelles valeurs de référence (Y)");
+  await expect(page.locator('.table-wrap')).toContainText(/20\s*€ par analyse/);
+  await expect(page.locator('.table-wrap')).toContainText(/50\s*€ par analyse/);
+  await page.getByRole("button", { name: "Retour", exact: true }).click();
+  await page.locator('input[data-field-id="predictionMode"][value="without_reference"]').check();
+  await expect(page.getByLabel("Nombre d’échantillons indépendants à prédire")).toHaveCount(0);
+  await expect(page.getByLabel("Amidon", { exact: true })).toHaveCount(0);
+  await expect(page.locator('[data-panel-body]')).toContainText("la justesse des valeurs prédites n’est pas vérifiée expérimentalement");
+  await expect(page.locator('#live-estimate strong').first()).not.toHaveText("Sur devis");
+  await expect(page.getByRole("button", { name: "Continuer" })).toBeEnabled();
   await expectNoBrowserErrors(errors);
 });
 
@@ -650,6 +835,66 @@ const MAINTENANCE_CASES = [
   ["model_update", "Mettre à jour ou étendre le modèle", /2\s*869\s*€.*3\s*881\s*€/],
   ["instrument_transfer", "Transférer vers un autre spectromètre", /2\s*295\s*€.*3\s*105\s*€/]
 ];
+
+test("audit : la saisie lente des demi-journées conserve le focus et actualise la capacité", async ({ page }, testInfo) => {
+  await openApp(page, testInfo);
+  await continueToCatalog(page);
+  await addCardAndGoToConfig(page, "spectra_bruker_tango");
+  await page.locator('input[data-field-id="serviceMode"][value="plateau_operated"]').check();
+  const field = page.locator('input[name="halfDays"]');
+  const original = await field.elementHandle();
+  await field.fill("");
+  await field.pressSequentially("12", { delay: 350 });
+  await expect(field).toHaveValue("12");
+  await expect(field).toBeFocused();
+  expect(await original.evaluate((node) => node.isConnected)).toBe(true);
+  await expect(page.locator('.spectral-capacity')).toContainText("12 demi-journée(s)");
+  await field.fill("");
+  await field.dispatchEvent("change");
+  await page.locator('input[name="samples"]').click();
+  await expect(field).toHaveAttribute("aria-invalid", "true");
+  await field.fill("2");
+  await field.dispatchEvent("change");
+  await expect(field).not.toHaveAttribute("aria-invalid", "true");
+  expect(await original.evaluate((node) => node.isConnected)).toBe(true);
+});
+
+test("audit : les textes saisis restent du texte dans la configuration et le résumé", async ({ page }, testInfo) => {
+  await openApp(page, testInfo);
+  await fillRequestStep(page);
+  const payload = '<svg data-audit-markup onload="globalThis.__auditMarkup=true">Texte de projet</svg>';
+  await page.locator('[data-project-field="title"]').fill(payload);
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  await addCardAndGoToConfig(page, "predict");
+  await page.getByLabel("Informations utiles pour préparer la discussion").fill(payload);
+  await page.getByLabel("Informations utiles pour préparer la discussion").dispatchEvent("change");
+  await progressStep(page, "Composer").click();
+  await progressStep(page, "Configurer").click();
+  await expect(page.locator('[data-item-summary]')).toContainText(payload);
+  await expect(page.locator('[data-audit-markup]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Continuer' }).click();
+  await expect(page.locator('#quote-title')).toBeVisible();
+  await expect(page.locator('.quote-head')).toContainText(payload);
+  await expect(page.locator('.item-summary-list')).toContainText(payload);
+  await expect(page.locator('[data-audit-markup]')).toHaveCount(0);
+  expect(await page.evaluate(() => globalThis.__auditMarkup)).toBeUndefined();
+});
+
+test("audit : une prédiction ne peut pas continuer avec un volume obligatoire vide", async ({ page }, testInfo) => {
+  await openApp(page, testInfo);
+  await continueToCatalog(page);
+  await addCardAndGoToConfig(page, "predict");
+  await page.getByLabel("Informations utiles pour préparer la discussion").fill("Description suffisante pour préparer le pré-devis de prédiction.");
+  await page.getByLabel("Informations utiles pour préparer la discussion").dispatchEvent("change");
+  for (const name of ["spectra", "models"]) {
+    const field = page.locator(`input[name="${name}"]`);
+    await field.fill("");
+    await field.dispatchEvent("change");
+    await expect(page.getByRole('button', { name: 'Continuer' })).toBeDisabled();
+    await field.fill("100");
+    await field.dispatchEvent("change");
+  }
+});
 
 for (const [maintenanceType, label, range] of MAINTENANCE_CASES) {
   test(`entretien simplifie - ${maintenanceType}`, async ({ page }, testInfo) => {

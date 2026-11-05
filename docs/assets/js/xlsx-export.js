@@ -61,6 +61,7 @@
   }
 
   function lineStatus(line) {
+    if (line.billingRangeReview?.required) return "À confirmer";
     return line.pricingMode === "quote" ? "Sur devis" : "Estimatif";
   }
 
@@ -77,6 +78,8 @@
       label: line.label || "",
       description: [line.reason, itemResult.summary].filter(Boolean).join(" | "),
       quantity,
+      quantityMax: Number(line.quantityMax ?? quantity),
+      referenceAnalysis: line.referenceAnalysis || null,
       unit: line.unit || "",
       technicalReferenceUnitPrice: rangeValue({ min: line.technicalReferenceUnitPrice }, "min"),
       technicalReferenceTotal: rangeValue({ min: line.technicalReferenceTotal }, "min"),
@@ -261,14 +264,15 @@
   function addLinesSheet(workbook, model) {
     const headers = [
       "N", "Parent", "Ligne", "Description", "Categorie cout", "Traitement partenariat",
-      "Quantite", "Unite", "Prix ref unitaire", "Total ref", "Prix unitaire modifie",
+      "Quantité minimale", "Unite", "Prix ref unitaire", "Total ref", "Prix unitaire modifie",
       "Taux discussion", "Taux discussion modifie", "Total technique retenu min",
       "Total technique retenu max", "Coef contexte", "Coef contexte modifie",
       "Part partenariat modifiee", "Total facture min", "Total facture max",
       "Mode tarif", "Statut", "Mode utilisation", "Base machine demi-journee",
       "Consommables demi-journee", "Taux assistance autonome", "Assistance autonome demi-journee",
       "Heures personnel", "Taux horaire", "Cout personnel demi-journee",
-      "Nombre transports", "Cout transport unitaire", "Commentaires plateau"
+      "Nombre transports", "Cout transport unitaire", "Commentaires plateau",
+      "Quantité maximale", "Échantillons indépendants", "Propriété de référence", "Prix chimie humide unitaire"
     ];
     const rows = model.lines.map((line) => [
       line.index,
@@ -303,7 +307,11 @@
       line.staffCost,
       line.transportOccurrences,
       line.transportUnitPrice,
-      line.comment
+      line.comment,
+      line.quantityMax,
+      line.referenceAnalysis?.samples ?? "",
+      line.referenceAnalysis?.property || "",
+      line.referenceAnalysis?.unitPrice ?? ""
     ]);
     const sheet = addRowsSheet(workbook, "LIGNES_PRESTATIONS", rows, headers);
     ["I", "J", "K", "N", "O", "S", "T"].forEach((col) => sheet.getColumn(col).numFmt = '#,##0 "€"');
@@ -355,7 +363,8 @@
 
   function csvEscape(value) {
     if (value === null || value === undefined) return "";
-    const text = String(value).replace(/\r?\n/g, " ");
+    let text = (typeof value === "object" ? JSON.stringify(value) : String(value)).replace(/\r?\n/g, " ");
+    if (typeof value === "string" && /^[\s\uFEFF]*[=+@-]/.test(text)) text = `'${text}`;
     return /[;"\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
   }
 

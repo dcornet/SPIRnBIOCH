@@ -54,3 +54,20 @@
 - Les prestations `model_maintenance` utilisent `maintenancePricing` et la même fourchette standard de ±15 % que les autres prestations éligibles.
 - La prédiction avec modèle existant utilise la fourchette standard de +/-15 %.
 - En phase interne, `internalExports.autoGenerateWithPdf=true` impose la génération du XLSX plateau avec le PDF. Prévoir sa désactivation/séparation avant ouverture publique.
+
+## Prédiction Avec Analyses de Référence
+
+- Conserver `existing_model_predictions` et le champ `predictionMode` (`without_reference` / `with_reference`). Les anciens brouillons restent en mode sans référence par défaut.
+- Les quantités et prix de chimie humide viennent uniquement de `predictionReferenceAnalyses` dans `data/tarifs.json`.
+- Calculer les quantités sur les échantillons indépendants à prédire et les arrondir au supérieur, jamais sur le nombre de spectres ou de répétitions. Le taux actif est fixé à 10 % (`samplingRate.min=max=0.1`), plafonné à 100 échantillons vérifiés par prestation, pour chaque propriété.
+- Présenter la discussion du programme en amont et sa réévaluation après diagnostic des nouveaux spectres (X) et des valeurs de référence disponibles (Y) par rapport aux données de calibration. Toute adaptation du nombre d’analyses et de son coût doit être validée avant les analyses complémentaires.
+- Les lignes `predictionReferenceAnalyses` ne reçoivent ni urgence, ni coefficient de contexte, ni marge d’incertitude supplémentaire. Elles restent facturées en partenariat.
+- Préserver `quantityMax` et `referenceAnalysis` dans les exports. Ne pas remplacer une fourchette de quantités par une hausse fictive du prix unitaire.
+- `billedEstimateRangeLimit` plafonne la fourchette globale à ±15 % après arrondi. Au-delà, le total client reste sur devis et le montant facturable exporté est `null`, jamais zéro. Les coûts calculés restent dans l’audit plateau, sans écrêtage.
+- Le partenariat ne doit pas ajouter une seconde plage de 50 à 100 % : `contexts.partnership.billedShare` reste `min=max=1`, après personnel et formations offerts. Le devis exact sera discuté avec le plateau.
+
+## Vérifications Avant Publication
+
+- Le total facturé doit correspondre à la somme des lignes arrondies affichées ; les prix unitaires d’audit doivent refléter le contexte final, jamais une étape intermédiaire.
+- Afficher les textes saisis avec `textContent` ou un échappement HTML. Les cellules textuelles CSV ne doivent pas être interprétées comme des formules.
+- Avant un push destiné à GitHub Pages, régénérer `docs/` avec `npm run build:public` et vérifier l’application produite, pas uniquement les sources.

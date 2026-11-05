@@ -318,6 +318,33 @@
     return workingDaysBetween(startValue, endValue) * 2;
   }
 
+  function restoreAcquisitionDetails(answers) {
+    const next = { ...answers };
+    const legacy = next.legacySpectraDetails || {};
+    if (next.samples === undefined && legacy.samples !== undefined) next.samples = legacy.samples;
+    if (next.replicates === undefined && legacy.replicates !== undefined) next.replicates = legacy.replicates;
+    if (next.instrument === "asd_labspec" && next.measurementDevice === "optical_fiber") {
+      next.legacyMeasurementDevice = next.measurementDevice;
+      next.measurementDevice = "";
+      next.measurementDeviceNeedsReview = true;
+    }
+    return next;
+  }
+
+  function predictionNotes(config, answers = {}) {
+    const notes = config.textes.prediction;
+    const rate = config.tarifs.predictionReferenceAnalyses.samplingRate;
+    const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 2 });
+    const samplingRange = rate.min === rate.max ? percent.format(rate.min) : `${percent.format(rate.min)} à ${percent.format(rate.max)}`;
+    const verification = answers.predictionMode === "with_reference"
+      ? notes.withReference.replace("{samplingRange}", samplingRange)
+        .replace("{maxSamples}", new Intl.NumberFormat("fr-FR").format(config.tarifs.predictionReferenceAnalyses.maxReferenceSamples))
+      : notes.withoutReference;
+    return [notes.conformity, verification, notes.releasePolicy];
+  }
+
+  NIRSApp.predictionNotes = predictionNotes;
+  NIRSApp.restoreAcquisitionDetails = restoreAcquisitionDetails;
   NIRSApp.money = money;
   NIRSApp.rangeMoney = rangeMoney;
   NIRSApp.createElement = createElement;

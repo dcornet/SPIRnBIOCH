@@ -25,8 +25,8 @@
       "text": "Application d'un modèle existant à de nouveaux spectres. La validité dépend du domaine couvert par la calibration."
     },
     "maintenance": {
-      "title": "Maintenance",
-      "text": "Contrôle périodique du modèle et mise à jour lorsque les produits, saisons, instruments ou conditions de mesure évoluent."
+      "title": "Vérification et adaptation d’un modèle",
+      "text": "Vérification de l’adéquation du modèle à vos échantillons et à votre usage, avec validation ou adaptation selon les besoins."
     },
     "bias_correction": {
       "title": "Correction de biais",
@@ -43,6 +43,18 @@
   },
   "result": {
     "nextStep": "Transmettre ces éléments au plateau pour discuter et valider le périmètre scientifique, les échantillons, les données disponibles, le délai et le devis définitif."
+  },
+  "acquisition": {
+    "capacityHelp": "Les cadences sont indicatives. Elles varient selon l’expérience de l’opérateur, la présentation et la nature de la matrice, ainsi que les manipulations, le repositionnement et le nettoyage nécessaires. Par exemple, des arachides entières et une pâte d’arachide ne se mesurent pas à la même cadence.",
+    "reservationReview": "Le nombre de demi-journées proposé sera confirmé avec le plateau. Il pourra être ajusté après discussion du type et du nombre d’échantillons, de leur préparation et des besoins de nettoyage, de vaisselle ou d’aspiration.",
+    "obsoleteDevice": "L’ancien dispositif « fibre optique » n’est plus proposé. Choisissez la sonde correspondant aux mesures prévues."
+  },
+  "prediction": {
+    "title": "Fiabilité et domaine d’application des prédictions",
+    "conformity": "Le plateau examine la conformité des spectres et les éventuels changements de domaine par rapport aux données de calibration pour apprécier le niveau de confiance attendu. Ce diagnostic ne remplace pas une validation par des analyses de référence.",
+    "withoutReference": "Sans analyses de référence sur le lot, la justesse des valeurs prédites n’est pas vérifiée expérimentalement. Les résultats doivent être interprétés au regard du domaine de validité du modèle et de l’usage envisagé.",
+    "withReference": "Le pré-devis prévoit des analyses de chimie humide sur {samplingRange} des échantillons indépendants à prédire, arrondis à l’entier supérieur et plafonnés à {maxSamples} échantillons par prestation, pour chaque propriété sélectionnée. Le programme d’analyses sera discuté en amont avec le plateau et pourra être revu à l’issue du diagnostic, selon les spécificités des nouveaux spectres (X) par rapport à ceux de la calibration et, lorsque des mesures de référence seront disponibles, des nouvelles valeurs de référence (Y) par rapport à celles de la calibration : plages de valeurs, distributions et méthodes de mesure. Toute adaptation du nombre d’analyses et de son coût sera discutée et validée avec le demandeur avant la réalisation d’analyses complémentaires. Les analyses sont ajoutées au pré-devis sans coefficient de contexte ni majoration d’urgence. Cette vérification partielle ne garantit pas à elle seule la validité de toutes les prédictions ni la mise à jour du modèle.",
+    "releasePolicy": "En cas d’écart important avec le domaine de calibration, le plateau peut suspendre la restitution des prédictions jugées non fiables après revue scientifique. Il en informe le demandeur, documente les limites constatées et discute des analyses de référence ou adaptations nécessaires avant toute restitution."
   },
   "provider": {
     "name": "Plateau Bioch&Spir",
@@ -67,6 +79,7 @@
     "quoteValidityDays": 45,
     "vatNote": "L'ajout éventuel de la TVA dépend du statut du demandeur et des règles applicables.",
     "administrativeFeeNote": "Il couvre la préparation administrative, la coordination, la facturation et le suivi du dossier.",
+    "estimateRangeNote": "La fourchette reflète les ajustements possibles de préparation, de manipulation et d’analyse selon les échantillons, les données disponibles et le périmètre retenu. Le montant exact sera discuté et affiné avec le plateau avant l’établissement du devis définitif. En partenariat, le personnel et les formations apportés par Bioch&SPIR ne sont pas ajoutés au montant à payer ; aucune seconde plage de facturation n’est appliquée.",
     "conditions": "Un bon de commande ou un document contractuel devra être communiqué avant le démarrage des prestations lorsque les règles du projet l'exigent.",
     "calibrationNote": {
       "title": "Calibration chimiométrique",

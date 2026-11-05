@@ -1174,6 +1174,7 @@ function calculatePredictions(result, tarifs, choices) {
   const maxSpectra = Number(rule.maxSpectra || Infinity);
   if (spectra > maxSpectra) {
     addQuoteItem(result, "existing_model_predictions", `Prédiction sur ${spectra} spectres`, `Volume supérieur au seuil automatique de ${maxSpectra} spectres`, true);
+    addPredictionReferenceAnalyses(result, tarifs, choices);
     return;
   }
   if (!asBool(choices.spectraAlreadyAcquired)) {
@@ -1209,6 +1210,52 @@ function calculatePredictions(result, tarifs, choices) {
     addChemometricDataPreparationForScans(result, tarifs, spectra);
   }
   result.assumptions.push("Le rapport de résultats courant et le contrôle de cohérence standard sont inclus dans la prestation de prédiction.");
+  addPredictionReferenceAnalyses(result, tarifs, choices);
+}
+
+function addPredictionReferenceAnalyses(result, tarifs, choices) {
+  if (choices.predictionMode !== "with_reference") return;
+  const policy = priceFrom(tarifs, "predictionReferenceAnalyses");
+  if (typeof policy.applyUrgency !== "boolean" || typeof policy.applyContextCoefficient !== "boolean" || !policy.costCategory || !policy.discussionRangePolicy) throw new Error("Politique tarifaire des analyses de référence incomplète.");
+  const minRate = finiteNumber(policy.samplingRate?.min, "Taux minimal d’analyses de référence", { positive: true });
+  const maxRate = finiteNumber(policy.samplingRate?.max, "Taux maximal d’analyses de référence", { positive: true });
+  if (maxRate < minRate || maxRate > 1 || policy.quantityRounding !== "ceil") throw new Error("Politique d’échantillonnage des analyses de référence invalide.");
+  const samples = assertQuantity(choices.samples, "Échantillons indépendants", { integer: true });
+  const maxSamples = assertQuantity(policy.maxReferenceSamples, "Plafond d’échantillons de référence", { integer: true });
+  const quantities = {
+    min: Math.min(maxSamples, Math.ceil(samples * minRate - Number.EPSILON * samples)),
+    max: Math.min(maxSamples, Math.ceil(samples * maxRate - Number.EPSILON * samples))
+  };
+  const properties = [...new Set(Array.isArray(choices.referenceProperties) ? choices.referenceProperties : [])];
+  if (!properties.length) throw new Error("Sélectionnez les propriétés à vérifier par chimie humide.");
+  const contextId = contextFrom(tarifs, choices.context).id;
+  for (const property of properties) {
+    const rule = priceFrom(policy.analyses, property);
+    const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 2 });
+    const quantityText = quantities.min === quantities.max ? `${quantities.min}` : `${quantities.min} à ${quantities.max}`;
+    const rateText = minRate === maxRate ? percent.format(minRate) : `${percent.format(minRate)} à ${percent.format(maxRate)}`;
+    const reason = `${quantityText} ${quantities.max === 1 ? "analyse" : "analyses"} pour ${samples} échantillons indépendants à prédire (${rateText}, arrondi supérieur, plafond de ${maxSamples} échantillons)`;
+    if (rule.pricingMode === "quote") {
+      addQuoteItem(result, `prediction_reference_${property}`, rule.label, reason, true);
+      continue;
+    }
+    const amount = finiteNumber(rule.contextAmounts?.[contextId], `Tarif de référence ${property} / ${contextId || "contexte à choisir"}`, { positive: true });
+    const unitPriceText = new Intl.NumberFormat("fr-FR", { style: "currency", currency: tarifs.metadata.currency, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(amount);
+    const line = addDerivedItem(result, `prediction_reference_${property}`, rule.label, quantities.min, rule.unit, amount, amount, `${reason} ; ${unitPriceText} par analyse`, true, policy.costCategory);
+    const totalMax = quantities.max * amount;
+    result.technicalValue.max += totalMax - line.totalMax;
+    line.totalMax = totalMax;
+    line.technicalTotalMax = totalMax;
+    line.billedTotalMax = totalMax;
+    line.costComponents = [{ category: policy.costCategory, label: rule.label, min: line.totalMin, max: totalMax }];
+    line.quantityMax = quantities.max;
+    line.technicalReferenceTotal = (line.totalMin + totalMax) / 2;
+    line.configRule = "predictionReferenceAnalyses";
+    line.applyUrgency = policy.applyUrgency;
+    line.applyContextCoefficient = policy.applyContextCoefficient;
+    line.discussionRangePolicy = policy.discussionRangePolicy;
+    line.referenceAnalysis = { property, samples, maxReferenceSamples: maxSamples, samplingRate: { min: minRate, max: maxRate }, quantity: quantities, unitPrice: amount, contextId };
+  }
 }
 
 function calculateMaintenance(result, tarifs, choices) {
@@ -1501,7 +1548,7 @@ function addUrgency(result, tarifs, choices) {
   let costCategory = urgent.costCategory || "technical_non_personnel";
   if (context?.mode === "negotiated_partnership") {
     const negotiated = new Set(context.billingPolicy?.negotiatedCategories || ["equipment", "consumables", "technical_non_personnel"]);
-    const totals = costCategoryTotals(result);
+    const totals = costCategoryTotals(result, isUrgencyEligible);
     components = [...negotiated]
       .map((category) => totals[category] ? ({
         category,
@@ -1617,14 +1664,19 @@ function applyContext(result, tarifs, choices) {
 
 function urgencyBaseFromLines(result) {
   return (result.items || []).reduce((sum, line) => {
-    if (line.pricingMode === "quote" || line.configRule === "instrumentTransport" || line.costCategory === "logistics") return sum;
+    if (!isUrgencyEligible(line)) return sum;
     return addRange(sum, lineTechnicalRange(line));
   }, { min: 0, max: 0 });
+}
+
+function isUrgencyEligible(line) {
+  return line.pricingMode !== "quote" && line.applyUrgency !== false && line.configRule !== "instrumentTransport" && line.costCategory !== "logistics";
 }
 
 function lineContextEligible(line) {
   return line.applyContextCoefficient !== false
     && line.configRule !== "externalAdministrativeFee"
+    && line.configRule !== "billingMinimumAdjustment"
     && line.configRule !== "instrumentTransport";
 }
 
@@ -1688,10 +1740,10 @@ function applyMarkupDisplayToItems(result, coefficient) {
   });
 }
 
-function costCategoryTotals(result) {
+function costCategoryTotals(result, predicate = () => true) {
   const totals = {};
   for (const line of result.items || []) {
-    if (line.pricingMode === "quote") continue;
+    if (line.pricingMode === "quote" || !predicate(line)) continue;
     ensureLineAccounting(line, line.costCategory);
     for (const component of line.costComponents || []) {
       const category = component.category || line.costCategory || "technical_non_personnel";
@@ -1710,9 +1762,10 @@ function applyNegotiatedPartnershipContext(result, context, tarifs) {
   const offered = new Set(policy.offeredCategories || ["personnel", "training"]);
   const negotiated = new Set(policy.negotiatedCategories || ["equipment", "consumables", "technical_non_personnel"]);
   const fullPrice = new Set(policy.fullPriceCategories || ["logistics", "pass_through"]);
-  const share = context.billedShare || { min: 0.5, max: 1 };
-  const shareMin = Number(share.min);
-  const shareMax = Number(share.max);
+  const share = priceFrom(context, "billedShare");
+  const shareMin = finiteNumber(share.min, "Part facturée minimale en partenariat");
+  const shareMax = finiteNumber(share.max, "Part facturée maximale en partenariat");
+  if (shareMax < shareMin || shareMax > 1) throw new Error("Part facturée en partenariat invalide.");
 
   result.items.forEach((line) => {
     if (line.pricingMode === "quote" || line.configRule === "externalAdministrativeFee") return;
@@ -1745,7 +1798,7 @@ function applyNegotiatedPartnershipContext(result, context, tarifs) {
     line.displayTotalMax = billed.max;
     const quantity = Number(line.quantity || 1) || 1;
     line.displayUnitPriceMin = billed.min / quantity;
-    line.displayUnitPriceMax = billed.max / quantity;
+    line.displayUnitPriceMax = billed.max / Number(line.quantityMax || quantity);
     if (offeredAmount.min > 0 || offeredAmount.max > 0) {
       line.offeredByPlatform = billed.min === 0 && billed.max === 0;
       line.contextNote = line.offeredByPlatform
@@ -1841,13 +1894,6 @@ function lineDisplayTotal(line) {
   return {
     min: Number.isFinite(line.displayTotalMin) ? Number(line.displayTotalMin) : Number(line.totalMin),
     max: Number.isFinite(line.displayTotalMax) ? Number(line.displayTotalMax) : Number(line.totalMax)
-  };
-}
-
-function lineDisplayUnitPrice(line) {
-  return {
-    min: Number.isFinite(line.displayUnitPriceMin) ? Number(line.displayUnitPriceMin) : Number(line.unitPriceMin),
-    max: Number.isFinite(line.displayUnitPriceMax) ? Number(line.displayUnitPriceMax) : Number(line.unitPriceMax)
   };
 }
 
@@ -2043,7 +2089,7 @@ function applyPreQuoteUncertainty(result, tarifs) {
 function linePartnershipTreatment(line, context) {
   if (line.pricingMode === "quote") return "quote";
   if (line.configRule === "externalAdministrativeFee" || line.configRule === "billingMinimumAdjustment") return "full_price";
-  if (context?.mode !== "negotiated_partnership") return "context_coefficient";
+  if (context?.mode !== "negotiated_partnership") return lineContextEligible(line) ? "context_coefficient" : "full_price";
   const policy = context.billingPolicy || {};
   const offered = new Set(policy.offeredCategories || []);
   const negotiated = new Set(policy.negotiatedCategories || []);
@@ -2073,8 +2119,8 @@ function finalizeLinePricingAuditFields(result) {
     line.parentLabel = line.parentLabel || "";
     line.assumptions = Array.isArray(line.assumptions) ? line.assumptions : [];
     line.warnings = Array.isArray(line.warnings) ? line.warnings : [];
-    line.partnershipTreatment = line.partnershipTreatment || linePartnershipTreatment(line, result.context);
-    line.contextCoefficient = line.contextCoefficient || result.contextCoefficient || null;
+    line.partnershipTreatment = linePartnershipTreatment(line, result.context);
+    line.contextCoefficient = lineContextEligible(line) ? result.contextCoefficient || null : { min: 1, max: 1 };
     if (line.pricingMode === "quote") {
       line.billedUnitPriceMin = null;
       line.billedUnitPriceMax = null;
@@ -2084,13 +2130,10 @@ function finalizeLinePricingAuditFields(result) {
     }
     const quantity = Number(line.quantity || 1) || 1;
     const displayTotal = lineDisplayTotal(line);
-    const displayUnit = lineDisplayUnitPrice(line);
-    line.billedUnitPriceMin = Number.isFinite(Number(line.billedUnitPriceMin)) ? Number(line.billedUnitPriceMin) : displayUnit.min;
-    line.billedUnitPriceMax = Number.isFinite(Number(line.billedUnitPriceMax)) ? Number(line.billedUnitPriceMax) : displayUnit.max;
-    line.billedTotalMin = Number.isFinite(Number(line.billedTotalMin)) ? Number(line.billedTotalMin) : displayTotal.min;
-    line.billedTotalMax = Number.isFinite(Number(line.billedTotalMax)) ? Number(line.billedTotalMax) : displayTotal.max;
-    if (!Number.isFinite(Number(line.billedUnitPriceMin))) line.billedUnitPriceMin = line.billedTotalMin / quantity;
-    if (!Number.isFinite(Number(line.billedUnitPriceMax))) line.billedUnitPriceMax = line.billedTotalMax / quantity;
+    line.billedTotalMin = displayTotal.min;
+    line.billedTotalMax = displayTotal.max;
+    line.billedUnitPriceMin = displayTotal.min / quantity;
+    line.billedUnitPriceMax = displayTotal.max / Number(line.quantityMax || quantity);
   }
 }
 
@@ -2110,7 +2153,7 @@ function finalizePricingAudit(result) {
         contextCoefficient: result.contextCoefficient?.min === result.contextCoefficient?.max
           ? result.contextCoefficient?.min ?? null
           : result.contextCoefficient || null,
-        partnershipTreatment: entry.partnershipTreatment || line?.partnershipTreatment || "negotiated",
+        partnershipTreatment: line?.partnershipTreatment || entry.partnershipTreatment || "negotiated",
         technicalDiscussionRange: line ? {
           min: Number(line.technicalDiscussionTotalMin ?? line.totalMin ?? 0),
           max: Number(line.technicalDiscussionTotalMax ?? line.totalMax ?? 0)
@@ -2131,6 +2174,52 @@ function finalizePricingAudit(result) {
   result.pricingAudit.billedEstimate = cloneRange(result.billedEstimate);
   result.pricingAudit.quoteRequiredItems = quoteRequiredItems(result);
   result.pricingAudit.overlapWarnings = result.pricingAudit.overlapWarnings || [];
+}
+
+function billedRangeReview(range, policy) {
+  const rate = finiteNumber(policy.rate, "Plafond de fourchette facturée");
+  if (rate >= 1 || policy.overflowPolicy !== "quote_required") throw new Error("Plafond de fourchette facturée invalide.");
+  const center = (Number(range.min) + Number(range.max)) / 2;
+  const relativeHalfWidth = center > 0 ? (Number(range.max) - Number(range.min)) / (2 * center) : 0;
+  return { required: relativeHalfWidth > rate + Number.EPSILON * 10, rateLimit: rate, relativeHalfWidth, computedEstimate: { ...range } };
+}
+
+function reconcileBilledTotals(result) {
+  if (!result.context) return;
+  result.billedEstimate = sumBilledLines(result);
+  for (const item of result.itemResults || []) {
+    if (item.status === "incomplete") continue;
+    const lines = result.items.filter((line) => line.parentItemId === item.itemId);
+    item.billedEstimate = sumBilledLines({ items: lines });
+  }
+  if (result.partnershipBreakdown) {
+    result.partnershipBreakdown.billedEstimate = { ...result.billedEstimate };
+    const fee = result.partnershipBreakdown.administrativeFee;
+    result.partnershipBreakdown.billedEstimateBeforeAdministrativeFee = {
+      min: result.billedEstimate.min - fee.min,
+      max: result.billedEstimate.max - fee.max
+    };
+  }
+}
+
+function applyBilledRangeLimit(result, tarifs) {
+  if (!result.context) return;
+  const policy = priceFrom(tarifs, "billedEstimateRangeLimit");
+  if (typeof policy.enabled !== "boolean") throw new Error("Activation du plafond de fourchette à renseigner.");
+  if (policy.enabled === false) return;
+  const review = billedRangeReview(result.billedEstimate, policy);
+  result.billingRangeReview = review;
+  result.pricingAudit.billingRangeReview = review;
+  if (!review.required) return;
+  result.status = "quote_required";
+  result.warnings.push(policy.exceededMessage);
+  result.billingRangeReview.message = policy.exceededMessage;
+  for (const line of result.items || []) {
+    if (line.pricingMode !== "quote") line.billingRangeReview = billedRangeReview(lineDisplayTotal(line), policy);
+  }
+  for (const item of result.itemResults || []) {
+    if (item.billedEstimate) item.billingRangeReview = billedRangeReview(item.billedEstimate, policy);
+  }
 }
 
 function roundPricingAudit(audit, rounding) {
@@ -2288,9 +2377,11 @@ function calculateSingleQuote(tarifs, choices, options = {}) {
       if (Number.isFinite(component.billedMax)) component.billedMax = roundRange({ min: component.billedMax, max: component.billedMax }, tarifs.rounding).max;
     });
   }
+  reconcileBilledTotals(result);
   finalizePricingAudit(result);
   result.pricingAudit = roundPricingAudit(result.pricingAudit, tarifs.rounding);
 
+  applyBilledRangeLimit(result, tarifs);
   result.exclusions = [...new Set([...(settings.addDisclaimers ? tarifs.disclaimers : []), ...result.exclusions])];
   result.warnings = [...new Set(result.warnings)];
   result.assumptions = [...new Set(result.assumptions)];
@@ -2355,7 +2446,8 @@ function cleanAnswersForRequest(prestations, requestType, answers, people = []) 
 }
 
 function migrateLegacyAnswers(requestType, answers) {
-  const next = { ...(answers || {}) };
+  const next = requestType === "spectra_acquisition"
+    ? NIRSApp.restoreAcquisitionDetails(answers || {}) : { ...(answers || {}) };
   if (requestType === "spectra_acquisition") {
     next.serviceMode = canonicalServiceMode(next.serviceMode);
     if (next.measurementLocation === "platform" || next.measurementLocation === "field") {
@@ -2367,8 +2459,9 @@ function migrateLegacyAnswers(requestType, answers) {
       next.transportMigrationWarning = "Ancien transport supprimé : mesures réalisées uniquement au laboratoire Bioch&SPIR.";
     }
   }
-  if (requestType === "existing_model_predictions" && next.outlierCheck === true) {
-    next.dataPreparationRequired = true;
+  if (requestType === "existing_model_predictions") {
+    if (next.predictionMode === undefined) next.predictionMode = "without_reference";
+    if (next.outlierCheck === true) next.dataPreparationRequired = true;
   }
   if (requestType === "model_maintenance") {
     const previousType = next.maintenanceType;
@@ -2473,7 +2566,7 @@ function addAggregateUrgency(result, tarifs, quoteState) {
   let costCategory = urgent.costCategory || "technical_non_personnel";
   if (context?.mode === "negotiated_partnership") {
     const negotiated = new Set(context.billingPolicy?.negotiatedCategories || ["equipment", "consumables", "technical_non_personnel"]);
-    const totals = costCategoryTotals(result);
+    const totals = costCategoryTotals(result, isUrgencyEligible);
     components = [...negotiated]
       .map((category) => totals[category] ? ({
         category,
@@ -2746,7 +2839,7 @@ function aggregateQuote(config, quoteState) {
     }
 
     try {
-      const line = calculateSingleQuote(tarifs, answers, {
+      const line = calculateSingleQuote(tarifs, { ...answers, context: quoteState.context }, {
         applyCommonOptions: false,
         applyUrgency: false,
         applyBillingMinimum: false,
@@ -2760,6 +2853,9 @@ function aggregateQuote(config, quoteState) {
       line.label = request.label;
       line.answers = answers;
       line.summary = NIRSApp.describeAnswers ? NIRSApp.describeAnswers(config, quoteItem.requestType, answers) : request.label;
+      if (quoteItem.requestType === "existing_model_predictions" && config.textes?.prediction) {
+        line.warnings.push(...NIRSApp.predictionNotes(config, answers));
+      }
       result.itemResults.push(line);
       result.technicalValue.min += line.technicalValue.min;
       result.technicalValue.max += line.technicalValue.max;
@@ -2846,12 +2942,14 @@ function aggregateQuote(config, quoteState) {
       if (Number.isFinite(line.displayTotalMax)) line.displayTotalMax = roundRange({ min: line.displayTotalMax, max: line.displayTotalMax }, tarifs.rounding).max;
     }
   }
+  reconcileBilledTotals(result);
   finalizePricingAudit(result);
   result.pricingAudit = roundPricingAudit(result.pricingAudit, tarifs.rounding);
 
   const hasIncomplete = result.itemResults.some((item) => item.status === "incomplete");
   const businessStatus = businessStatusFromItems(result.itemResults, result.items);
   result.status = hasIncomplete && businessStatus === "estimated" ? "partial" : businessStatus;
+  applyBilledRangeLimit(result, tarifs);
   result.exclusions = [...new Set([...result.exclusions, ...tarifs.disclaimers])];
   result.warnings = [...new Set(result.warnings)];
   result.assumptions = [...new Set(result.assumptions)];

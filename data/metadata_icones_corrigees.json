@@ -29,8 +29,8 @@
     },
     {
       "id": "entretenir",
-      "titre": "Entretenir",
-      "sstitre": "Maintenir un modèle",
+      "titre": "Vérifier et adapter un modèle",
+      "sstitre": "Valider l’usage d’un modèle",
       "description": "Vérifier les performances d’un modèle, corriger un biais, le mettre à jour ou le transférer vers un autre instrument.",
       "png": "data/icones/entretenir_light.png",
       "svg": "svg/entretenir.svg",
@@ -67,7 +67,7 @@
       "id": "asd-labspec",
       "titre": "ASD LabSpec",
       "sstitre": "NIR portable avec sonde",
-      "description": "Acquérir des spectres NIR au laboratoire ou sur le terrain, avec une sonde ou une fibre optique.",
+      "description": "Acquérir des spectres NIR avec une sonde de contact de 2 cm, une pince à feuille ou une microsonde de 0,3 cm.",
       "png": "data/icones/labspec2_light.png",
       "svg": "svg/asd-labspec.svg",
       "source_recadree": "sources_recadrees/asd-labspec.png"

@@ -270,6 +270,9 @@
       const previousInstrument = item.answers.instrument;
       const previousMeasurementDevice = item.answers.measurementDevice;
       item.answers[fieldId] = value;
+      if (item.requestType === "spectra_acquisition" && fieldId === "measurementDevice" && value) {
+        delete item.answers.measurementDeviceNeedsReview;
+      }
       syncDerivedItemAnswers(item, fieldId, { previousInstrument, previousMeasurementDevice });
       item.answers = NIRSApp.pruneHiddenAnswers(config.prestations, item.requestType, item.answers);
       ensureCustomAnswers(item);
@@ -281,6 +284,7 @@
       const affectsGlobalUsers = item.requestType === "spectra_acquisition" && ["instrument", "serviceMode"].includes(fieldId);
       if (shouldRenderDependents && affectsGlobalUsers) fullRender();
       else if (shouldRenderDependents) renderConfigurationPanelBody(itemId);
+      else refreshFieldErrors(item);
     }
 
     function addPerson(itemId, collection) {
@@ -472,7 +476,7 @@
         item.answers.measurementDevice = remembered;
       }
       const defaultDevice = Object.entries(devices).find(([, device]) => device.default === true)?.[0] || "";
-      if (!item.answers.measurementDevice && defaultDevice) {
+      if (!item.answers.measurementDevice && defaultDevice && !item.answers.measurementDeviceNeedsReview) {
         item.answers.measurementDevice = defaultDevice;
       }
       if (config.tarifs.instruments[item.answers.instrument]?.transportPolicy === "forbidden") {
@@ -741,7 +745,7 @@
     }
 
     function catalogCardText(cardConfig) {
-      const metadata = (config.catalogMetadata?.vignettes || []).find((entry) => entry.id === cardConfig.metadataId);
+      const metadata = cardConfig.preferCardText ? null : (config.catalogMetadata?.vignettes || []).find((entry) => entry.id === cardConfig.metadataId);
       return {
         title: metadata?.titre || cardConfig.label,
         subtitle: metadata?.sstitre || metadata?.subtitle || cardConfig.instrumentType || "",
@@ -833,7 +837,7 @@
           <div>
             <h3>${request.label || item.requestType || "Prestation inconnue"}</h3>
             <p class="error">Cette prestation n'a pas pu être affichée. Les autres prestations restent configurables.</p>
-            <small>${error.message || "Erreur de rendu"}</small>
+            <small>${escapeHtml(error.message || "Erreur de rendu")}</small>
           </div>
           <div class="panel-actions">
             <button type="button" class="button-danger" data-remove-item="${item.id}">Supprimer</button>
@@ -855,7 +859,7 @@
         <header class="config-panel__head">
           <button type="button" class="panel-toggle" data-toggle-panel aria-expanded="true" aria-controls="${bodyId}">
             <span>${index + 1}. ${request.label}</span>
-            <small data-item-summary="${item.id}">${NIRSApp.describeAnswers(config, item.requestType, answersForItem(item)) || "À compléter"}</small>
+            <small data-item-summary="${item.id}">${escapeHtml(NIRSApp.describeAnswers(config, item.requestType, answersForItem(item)) || "À compléter")}</small>
             <strong data-item-status="${item.id}">${status}</strong>
           </button>
           <div class="panel-actions">
@@ -931,9 +935,13 @@
           const showError = attemptedSteps.has(3) || touchedFields.has(`${item.id}.${field.id}`);
           fieldset.append(renderField(item, field, showError ? errors[field.id] : ""));
         });
-        if (item.requestType === "spectra_acquisition" && sectionId === "available_data") {
+        if (item.requestType === "spectra_acquisition" && sectionId === "volume") {
+          const capacitySlot = NIRSApp.createElement("div");
+          capacitySlot.dataset.spectralCapacity = item.id;
           const capacityBlock = renderSpectralCapacityBlock(item);
-          if (capacityBlock) fieldset.append(capacityBlock);
+          if (capacityBlock) capacitySlot.append(capacityBlock);
+          fieldset.append(capacitySlot);
+          fieldset.append(NIRSApp.createElement("p", "muted field-wide", config.textes.acquisition.reservationReview));
         }
         container.append(fieldset);
       });
@@ -943,6 +951,12 @@
       }
       if (item.requestType === "initial_training") {
         container.append(renderParticipants(item, errors));
+      }
+      if (item.requestType === "existing_model_predictions") {
+        const notes = config.textes.prediction;
+        const notice = NIRSApp.createElement("section", "notice-inline");
+        notice.innerHTML = `<h4>${escapeHtml(notes.title)}</h4>${NIRSApp.predictionNotes(config, hydratedAnswers).map((text) => `<p>${escapeHtml(text)}</p>`).join("")}`;
+        container.append(notice);
       }
       container.append(renderSubtotal(calculateItemSubtotal(item)));
     }
@@ -1026,7 +1040,7 @@
         input.setAttribute("aria-describedby", error ? errorId : "");
         wrapper.append(label, input);
       } else if (field.type === "textarea") {
-        const label = NIRSApp.createElement("label", "", `${field.label}${field.required ? " *" : ""}`);
+        const label = NIRSApp.createElement("label", "", field.label);
         label.htmlFor = id;
         const textarea = NIRSApp.createElement("textarea");
         textarea.id = id;
@@ -1039,7 +1053,7 @@
         textarea.dataset.fieldId = field.id;
         wrapper.append(label, textarea);
       } else if (field.type === "text" || field.type === "date") {
-        const label = NIRSApp.createElement("label", "", `${field.label}${field.required ? " *" : ""}`);
+        const label = NIRSApp.createElement("label", "", field.label);
         label.htmlFor = id;
         const input = NIRSApp.createElement("input");
         input.id = id;
@@ -1063,6 +1077,7 @@
         wrapper.append(label);
       } else if (field.type === "checkboxList") {
         const fieldset = NIRSApp.createElement("fieldset", "checkbox-list");
+        fieldset.id = id;
         fieldset.innerHTML = `<legend>${field.label}</legend>`;
         const selected = new Set(Array.isArray(item.answers[field.id]) ? item.answers[field.id] : []);
         checkboxListOptions(field).forEach((option) => {
@@ -1095,6 +1110,22 @@
         });
         wrapper.append(fieldset);
       }
+      const required = NIRSApp.isRequired(field, item.answers);
+      const control = wrapper.querySelector(`#${id}`);
+      if (required) {
+        const label = wrapper.querySelector(`label[for="${id}"]`);
+        if (label) label.insertAdjacentHTML("beforeend", ` ${requiredMarker()}`);
+        const legend = wrapper.querySelector("legend");
+        if (!label && legend) legend.insertAdjacentHTML("beforeend", ` ${requiredMarker()}`);
+        if (control && control.tagName !== "FIELDSET") {
+          control.required = true;
+          control.setAttribute("aria-required", "true");
+        }
+      }
+      if (error && control) {
+        control.setAttribute("aria-invalid", "true");
+        control.setAttribute("aria-describedby", errorId);
+      }
       if (error) {
         const node = NIRSApp.createElement("p", "error", error);
         node.id = errorId;
@@ -1106,6 +1137,7 @@
         if (transportNote) wrapper.append(transportNote);
       }
       if (item.requestType === "spectra_acquisition" && field.id === "measurementDevice") {
+        if (item.answers.measurementDeviceNeedsReview) wrapper.append(NIRSApp.createElement("p", "notice-inline", config.textes.acquisition.obsoleteDevice));
         const deviceInfo = renderMeasurementDeviceInfo(item);
         if (deviceInfo) wrapper.append(deviceInfo);
       }
@@ -1208,7 +1240,7 @@
       const profile = measurementDeviceProfile(item);
       if (!profile?.measurementWindow) return null;
       const node = NIRSApp.createElement("div", "measurement-device-note field-derived-info");
-      node.innerHTML = `<p><strong>Zone de mesure :</strong> ${escapeHtml(profile.measurementWindow)}</p>`;
+      node.innerHTML = `<p><strong>Zone de mesure :</strong> ${escapeHtml(profile.measurementWindow)}</p>${profile.vigilance ? `<p><strong>Point de vigilance :</strong> ${escapeHtml(profile.vigilance)}</p>` : ""}`;
       return node;
     }
 
@@ -1233,10 +1265,11 @@
         return node;
       }
       const node = NIRSApp.createElement("div", "spectral-capacity field-derived-info");
-      const tooltip = renderTooltip("spectral-capacity-help", "Les cadences sont indicatives et incluent le nommage des spectres, la traçabilité manuelle, la manipulation des échantillons, le nettoyage courant et l’amortissement du temps de mise en route sur une demi-journée. En cas de préparation spécifique ou de nettoyage approfondi, la cadence doit être réduite.");
+      const tooltip = renderTooltip(`spectral-capacity-help-${item.id}`, config.textes.acquisition.capacityHelp);
       node.innerHTML = `
         <div class="spectral-capacity__head"><strong>Quantité de spectres indicative : ${formatInteger(capacity.min)} à ${formatInteger(capacity.max)} spectres.</strong>${tooltip}</div>
         <p>Cette quantité correspond au produit du nombre d’échantillons par le nombre de répétitions spectrales.</p>
+        <p>${escapeHtml(config.textes.acquisition.capacityHelp)}</p>
         <small>${capacity.halfDays} demi-journée(s) × ${capacity.hoursPerHalfDay} heures × ${capacity.ratePerHour.min} à ${capacity.ratePerHour.max} spectres par heure</small>
       `;
       attachTooltips(node);
@@ -1383,7 +1416,7 @@
               <select data-global-assignment-field="trainingStatus" data-instrument-id="${instrument.id}" data-person-id="${person.id}" required aria-required="true">
                 <option value="">À compléter</option>
                 <option value="trained" ${assignment.trainingStatus === "trained" ? "selected" : ""}>Oui, déjà effectuée</option>
-                <option value="untrained" ${assignment.trainingStatus === "untrained" ? "selected" : ""}>Non ou à prévoir</option>
+                <option value="untrained" ${assignment.trainingStatus === "untrained" ? "selected" : ""}>Non</option>
               </select>
               ${showErrors && errors[`${prefix}.trainingStatus`] ? `<small class="error">${errors[`${prefix}.trainingStatus`]}</small>` : ""}
             </label>
@@ -1478,7 +1511,7 @@
               <select data-person-field="trainingStatus" data-collection="${collection}" data-person-id="${personId}" data-item-id="${item.id}" required aria-required="true">
                 <option value="">À compléter</option>
                 <option value="trained" ${status === "trained" ? "selected" : ""}>Oui, déjà effectuée</option>
-                <option value="untrained" ${status === "untrained" ? "selected" : ""}>Non ou à prévoir</option>
+                <option value="untrained" ${status === "untrained" ? "selected" : ""}>Non</option>
               </select>
               ${errors[`${prefix}.trainingStatus`] ? `<small class="error">${errors[`${prefix}.trainingStatus`]}</small>` : ""}
             </label>
@@ -1522,7 +1555,7 @@
     function subtotalAmountText(result) {
       if (!result) return "À discuter avec le plateau";
       if (result.status === "incomplete") return "À compléter";
-      if (result.status === "quote_required") return "Sur devis";
+      if (result.status === "quote_required" || result.billingRangeReview?.required) return "Sur devis";
       if (result.billedEstimate) return NIRSApp.rangeMoney(result.billedEstimate, result.currency);
       return "À discuter avec le plateau";
     }
@@ -1534,7 +1567,7 @@
       const contextLabel = result.context?.label || "Contexte à choisir";
       const contextDetail = result.context?.display || contextLabel;
       const billedEstimate = result.context
-        ? NIRSApp.rangeMoney(result.billedEstimate, result.currency)
+        ? (result.billingRangeReview?.required ? "Sur devis" : NIRSApp.rangeMoney(result.billedEstimate, result.currency))
         : "À compléter";
       const isPartnership = result.context?.mode === "negotiated_partnership";
       const hasContribution = Number(result.inKindContribution?.min || 0) > 0 || Number(result.inKindContribution?.max || 0) > 0;
@@ -1557,7 +1590,7 @@
         <div>
           <span>${isPartnership ? "Part facturée indicative HT à définir" : totalLabel}</span>
           <strong>${!result.context ? "À compléter" : billedEstimate}</strong>
-          <small>${isPartnership ? `À valider avec le plateau.${administrativeFeeNote ? ` ${administrativeFeeNote}.` : ""}` : `${contextDetail || contextHelp}`}${incomplete ? ` - ${incomplete} prestation(s) à compléter` : ""}${quoteLines ? ` - ${quoteLines} élément(s) sur devis non inclus` : ""}</small>
+          <small>${result.billingRangeReview?.required ? escapeHtml(result.billingRangeReview.message) : (isPartnership ? `À valider avec le plateau.${administrativeFeeNote ? ` ${administrativeFeeNote}.` : ""}` : `${contextDetail || contextHelp}`)}${incomplete ? ` - ${incomplete} prestation(s) à compléter` : ""}${quoteLines ? ` - ${quoteLines} élément(s) sur devis non inclus` : ""}</small>
         </div>
         ${isPartnership ? `
           <div>
@@ -1582,6 +1615,8 @@
         if (!itemId || !fieldId) return;
         control.addEventListener("blur", () => {
           touchedFields.add(`${itemId}.${fieldId}`);
+          const item = state.items.find((entry) => entry.id === itemId);
+          if (item) refreshFieldErrors(item);
         });
         if (control.dataset.checkboxList === "true") {
           control.addEventListener("change", () => {
@@ -1594,10 +1629,12 @@
           let timer;
           control.addEventListener("input", () => {
             clearTimeout(timer);
-            const item = state.items.find((entry) => entry.id === itemId);
-            timer = setTimeout(() => updateAnswer(itemId, fieldId, control.value, item?.requestType === "spectra_acquisition" && fieldId === "halfDays"), 200);
+            timer = setTimeout(() => updateAnswer(itemId, fieldId, control.value, false), 200);
           });
-          control.addEventListener("change", () => updateAnswer(itemId, fieldId, control.value, true));
+          control.addEventListener("change", () => {
+            clearTimeout(timer);
+            updateAnswer(itemId, fieldId, control.value, false);
+          });
         } else {
           control.addEventListener("change", () => updateAnswer(itemId, fieldId, control.type === "checkbox" ? control.checked : control.value, true));
         }
@@ -1748,6 +1785,35 @@
       });
     }
 
+    function refreshFieldErrors(item) {
+      const answers = answersForItem(item);
+      const errors = NIRSApp.validateItem(config.prestations, item.requestType, answers);
+      for (const field of NIRSApp.allVisibleFields(config.prestations, item.requestType, answers)) {
+        const control = document.getElementById(`${item.id}-${field.id}`);
+        const wrapper = control?.closest(".field");
+        if (!wrapper) continue;
+        const errorId = `${control.id}-error`;
+        let error = document.getElementById(errorId);
+        const message = attemptedSteps.has(3) || touchedFields.has(`${item.id}.${field.id}`) ? errors[field.id] : "";
+        const describedBy = (control.getAttribute("aria-describedby") || "").split(/\s+/).filter((id) => id && id !== errorId);
+        if (message) {
+          if (!error) {
+            error = NIRSApp.createElement("p", "error");
+            error.id = errorId;
+            wrapper.append(error);
+          }
+          error.textContent = message;
+          control.setAttribute("aria-invalid", "true");
+          describedBy.push(errorId);
+        } else {
+          error?.remove();
+          control.removeAttribute("aria-invalid");
+        }
+        if (describedBy.length) control.setAttribute("aria-describedby", describedBy.join(" "));
+        else control.removeAttribute("aria-describedby");
+      }
+    }
+
     function refreshItemStatus(itemId) {
       const item = state.items.find((entry) => entry.id === itemId);
       if (!item) return;
@@ -1760,6 +1826,11 @@
       if (!body) return;
       const subtotal = body.querySelector(".item-subtotal");
       if (subtotal) subtotal.replaceWith(renderSubtotal(calculateItemSubtotal(item)));
+      const capacitySlot = body.querySelector("[data-spectral-capacity]");
+      if (capacitySlot) {
+        const capacity = renderSpectralCapacityBlock(item);
+        capacitySlot.replaceChildren(...(capacity ? [capacity] : []));
+      }
     }
 
     function calculateItemSubtotal(item) {
@@ -2025,7 +2096,8 @@
   }
 
   function migrateItemAnswers(requestType, answers) {
-    const next = { ...(answers || {}) };
+    const next = requestType === "spectra_acquisition"
+      ? NIRSApp.restoreAcquisitionDetails(answers || {}) : { ...(answers || {}) };
     if (requestType === "spectra_acquisition") {
       next.serviceMode = canonicalServiceMode(next.serviceMode);
       if (!next.halfDays) {
@@ -2038,13 +2110,14 @@
       if (next.measurementLocation === "platform" || next.measurementLocation === "field") {
         next.measurementLocation = next.measurementLocation === "field" ? "transport_required" : "bioch_spir_lab";
       }
-      if (config.tarifs.instruments[next.instrument]?.transportPolicy === "forbidden" && next.measurementLocation === "transport_required") {
+      if (globalThis.NIRS_CONFIG?.tarifs.instruments[next.instrument]?.transportPolicy === "forbidden" && next.measurementLocation === "transport_required") {
         next.measurementLocation = "bioch_spir_lab";
         next.transportMigrationWarning = "Ancien transport supprimé : mesures réalisées uniquement au laboratoire Bioch&SPIR.";
       }
     }
-    if (requestType === "existing_model_predictions" && next.outlierCheck === true) {
-      next.dataPreparationRequired = true;
+    if (requestType === "existing_model_predictions") {
+      if (next.predictionMode === undefined) next.predictionMode = "without_reference";
+      if (next.outlierCheck === true) next.dataPreparationRequired = true;
     }
     if (requestType === "model_maintenance") {
       const previousType = next.maintenanceType;

@@ -60,6 +60,14 @@ npm run build:public
 
 Puis configurer GitHub Pages pour servir le dossier `docs/`. Ce dossier contient uniquement les fichiers nécessaires à l'application statique : HTML, CSS, JS, icônes, images servies, favicon, image d'accueil et bibliothèques d'export chargées à la demande.
 
+Pour tester le dossier généré avec les mêmes scénarios navigateur :
+
+```powershell
+$env:PLAYWRIGHT_ENTRY = "docs/index.html"
+npx playwright test
+Remove-Item Env:PLAYWRIGHT_ENTRY
+```
+
 ## Fonctionnement multiprestations
 
 L'état d'une demande est structuré autour d'un tableau `items` :
@@ -115,7 +123,7 @@ L'utilisateur peut ajouter plusieurs prestations, ajouter deux fois le même typ
 - `internal_agap` affiche uniquement le total estimatif après contexte et forfait.
 - `subcontracting` affiche uniquement le total estimatif ; l'ajustement de sous-traitance reste interne.
 - `partnership` affiche une part facturée indicative à définir, les apports Bioch&SPIR identifiés et la contribution complémentaire possible.
-- La contribution Bioch&SPIR correspond aux composantes offertes et à la part non facturée des composantes négociables. Elle n'est jamais une charge ajoutée.
+- La contribution Bioch&SPIR correspond aux composantes offertes, notamment le personnel instrumental et les formations. Les autres composantes restent facturées avec leur fourchette technique, sans seconde plage de 50 à 100 %. La contribution n’est jamais une charge ajoutée.
 - La contribution en nature est une différence, jamais une charge ajoutée.
 - L'urgence est appliquée une seule fois au total calculable.
 - Le minimum de facturation administratif global est appliqué une seule fois au pré-devis agrégé. Un minimum propre à un lot doit être modélisé explicitement dans la prestation concernée.
@@ -134,7 +142,34 @@ Le masquage d'un bouton ou d'une section dans une application statique ne consti
 
 Un brouillon est sauvegardé automatiquement dans `localStorage`. Au redémarrage, l'utilisateur peut reprendre le brouillon ou recommencer.
 
-Aucune donnée nominative sensible ne doit être stockée : prénom, nom, courriel, téléphone, référence projet, commentaire libre et noms des utilisateurs ou participants sont exclus du brouillon automatique.
+Le brouillon conserve les coordonnées du demandeur, le projet, le contexte, les utilisateurs, les prestations et l’étape courante sur cet ordinateur uniquement. Aucune transmission réseau n’est effectuée. Sur un poste partagé, effacer le brouillon après utilisation.
+
+## Ajustements du document NIRS_MS 1
+
+- Les trois dispositifs ASD sont la sonde de contact de 2 cm, la pince à feuille et la microsonde de 0,3 cm. Une ancienne « fibre optique » impose une nouvelle sélection, sans substitution silencieuse.
+- Les cadences du tableau fourni sont conservées dans `spectralThroughputProfiles`. Le nom historique `samplesPerHour` désigne ici une cadence de **spectres par heure**, pas un nombre d’échantillons indépendants.
+- Le volume d’acquisition exige les demi-journées et le nombre estimé d’échantillons. Les répétitions sont facultatives, proposées à 2. Échantillons et répétitions sont conservés dans le brouillon, le résumé et les exports, sans effet sur le prix instrumental.
+- « Vérifier et adapter un modèle » remplace le libellé « Entretenir », sans modifier les identifiants ou les cinq interventions publiques.
+- Les prédictions affichent un diagnostic de conformité, les limites d’une absence de validation par référence et la possibilité d’une suspension de restitution après revue scientifique.
+- Le catalogue distingue les prédictions sans analyses de référence et avec vérification par chimie humide. Les anciens brouillons sont repris sans analyses de référence, sans ajout automatique de dépenses.
+
+## Prédiction et Chimie Humide 0.3.24
+
+`predictionReferenceAnalyses` dans `data/tarifs.json` pilote les quantités et les tarifs des analyses de référence. Le calcul porte sur 10 % des échantillons indépendants à prédire (`samplingRate.min=max=0.1`), arrondis à l’entier supérieur et plafonnés à 100 échantillons vérifiés par prestation, pour chaque propriété. Il ne porte pas sur les répétitions spectrales. Le programme sera discuté en amont avec le plateau, puis pourra être revu à l’issue du diagnostic des nouveaux spectres (X) et des valeurs de référence disponibles (Y), par comparaison aux données de calibration. Toute modification du nombre d’analyses et de son coût devra être validée avec le demandeur avant les analyses complémentaires. Cette mention est commune au formulaire, au résumé, au PDF et aux exports.
+
+- Amidon : 10 EUR par analyse en interne AGAP, 40 EUR pour les laboratoires publics hors AGAP, 20 EUR en partenariat et 50 EUR en sous-traitance privée.
+- Protéines : 50 EUR par analyse, sous-traitée à SELMET, dans tous les contextes.
+- Les analyses ne reçoivent ni coefficient de contexte, ni majoration d’urgence, ni seconde marge d’incertitude. Elles restent facturées intégralement en partenariat et ne constituent pas une contribution offerte.
+- Les autres propriétés restent sur devis. Une propriété n’est comptée qu’une fois par prestation, même si elle est sélectionnée plusieurs fois dans un ancien export.
+- `quantity` / `quantityMax` et `referenceAnalysis` conservent les quantités, taux, prix unitaire et contexte dans le JSON. Le PDF indique le nombre d’analyses et le tarif unitaire ; le XLSX inclut les mêmes informations.
+
+`billedEstimateRangeLimit` impose un plafond global de ±15 % autour du centre de la fourchette, après contexte, urgence, forfait de gestion, minimum et arrondi. Si la variabilité des quantités dépasse ce plafond, le total client passe sur devis, sans tronquer les prix ni inventer un pourcentage intermédiaire de facturation. Le JSON client porte alors `billedEstimate: null` (montant non arrêté, jamais une prestation gratuite) ; le calcul intégral reste dans `platformPricingAudit` et `billingRangeReview.computedEstimate` pour la discussion avec le plateau. Les exports plateau conservent les coûts et les quantités de travail.
+
+En partenariat, personnel et formations offerts restent distincts du montant facturé. Le paramètre historique `billedShare` reste présent pour compatibilité, avec `min=max=1` : aucune seconde plage ne s’ajoute à la fourchette technique. Le devis exact est discuté avec le plateau.
+
+## Audit 0.3.25
+
+Les totaux facturés sont la somme des lignes arrondies affichées, y compris pour les demandes multiprestations. Les prix unitaires facturés et le traitement partenarial des exports sont recalculés après application du contexte. Les champs de volume nécessaires à la prédiction sont obligatoires. La saisie numérique conserve les champs et le focus, tout en actualisant les erreurs et la capacité indicative. Les textes saisis sont affichés comme du texte dans le résumé ; les exports CSV neutralisent les formules présentes dans des commentaires.
 
 ## PDF A4
 
