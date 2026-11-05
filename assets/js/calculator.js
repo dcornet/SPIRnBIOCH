@@ -1167,23 +1167,17 @@ function calculateTransfer(result, tarifs, choices) {
 }
 
 function calculatePredictions(result, tarifs, choices) {
+  choices = NIRSApp.preparePredictionAnswers(choices);
   const spectra = assertQuantity(choices.spectra, "Nombre de spectres", { integer: true });
+  assertQuantity(choices.replicates, "Répétitions spectrales par échantillon", { integer: true });
   const models = assertQuantity(choices.models, "Nombre de modèles", { integer: true });
-  const instrument = instrumentFrom(tarifs, choices.instrument);
+  instrumentFrom(tarifs, choices.instrument);
   const rule = priceFrom(tarifs.chemometrics, "existing_model_predictions");
   const maxSpectra = Number(rule.maxSpectra || Infinity);
   if (spectra > maxSpectra) {
     addQuoteItem(result, "existing_model_predictions", `Prédiction sur ${spectra} spectres`, `Volume supérieur au seuil automatique de ${maxSpectra} spectres`, true);
     addPredictionReferenceAnalyses(result, tarifs, choices);
     return;
-  }
-  if (!asBool(choices.spectraAlreadyAcquired)) {
-    addQuoteItem(
-      result,
-      "prediction_spectra_acquisition_required",
-      `Acquisition des spectres - ${instrument.label}`,
-      "Les spectres ne sont pas déclarés comme déjà acquis : ajouter une prestation de prise de spectres ou discuter le périmètre avec le plateau."
-    );
   }
   const setup = Number(rule.setupAmount || 0);
   const perSpectrum = Number(rule.perSpectrumAmount || 0);
@@ -2414,7 +2408,7 @@ function emptyAggregate(config) {
 
 function cleanAnswersForRequest(prestations, requestType, answers, people = []) {
   if (!NIRSApp.allVisibleFields) return { ...answers };
-  const migratedAnswers = migrateLegacyAnswers(requestType, answers || {});
+  const migratedAnswers = migrateLegacyAnswers(requestType, answers || {}, prestations);
   const clean = { requestType };
   for (const field of NIRSApp.allVisibleFields(prestations, requestType, migratedAnswers || {})) {
     if (Object.prototype.hasOwnProperty.call(migratedAnswers || {}, field.id)) {
@@ -2445,9 +2439,12 @@ function cleanAnswersForRequest(prestations, requestType, answers, people = []) 
   return clean;
 }
 
-function migrateLegacyAnswers(requestType, answers) {
+function migrateLegacyAnswers(requestType, answers, prestations) {
   const next = requestType === "spectra_acquisition"
-    ? NIRSApp.restoreAcquisitionDetails(answers || {}) : { ...(answers || {}) };
+    ? NIRSApp.restoreAcquisitionDetails(answers || {})
+    : requestType === "existing_model_predictions"
+      ? NIRSApp.preparePredictionAnswers(answers, prestations.requestTypes?.[requestType]?.fields.find((field) => field.id === "replicates")?.default)
+      : { ...(answers || {}) };
   if (requestType === "spectra_acquisition") {
     next.serviceMode = canonicalServiceMode(next.serviceMode);
     if (next.measurementLocation === "platform" || next.measurementLocation === "field") {

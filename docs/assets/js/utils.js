@@ -331,6 +331,41 @@
     return next;
   }
 
+  function preparePredictionAnswers(answers = {}, defaultReplicates) {
+    const next = { ...answers };
+    const legacy = { ...(next.legacyPredictionAnswers || {}) };
+    if (Object.prototype.hasOwnProperty.call(next, "spectraAlreadyAcquired")) {
+      legacy.spectraAlreadyAcquired = next.spectraAlreadyAcquired;
+      delete next.spectraAlreadyAcquired;
+    }
+    if (next.replicates === undefined) {
+      const previousSamples = Number(next.samples);
+      const inferred = Number(next.spectra) / previousSamples;
+      if (next.samples !== undefined) legacy.samples = next.samples;
+      next.replicates = previousSamples > 0 && Number.isInteger(inferred) && inferred > 0 ? inferred : defaultReplicates;
+    }
+    if (Object.keys(legacy).length) next.legacyPredictionAnswers = legacy;
+    if (next.predictionMode === undefined) next.predictionMode = "without_reference";
+    const spectra = Number(next.spectra);
+    const replicates = Number(next.replicates);
+    next.samples = Number.isInteger(spectra) && spectra > 0 && Number.isInteger(replicates) && replicates > 0
+      ? Math.ceil(spectra / replicates) : "";
+    return next;
+  }
+
+  function billingRangeExplanation(config, result) {
+    const range = result.billedEstimate;
+    if (!result.context || result.status === "quote_required" || !range || range.min === range.max) return "";
+    const center = (range.min + range.max) / 2;
+    if (center <= 0) return "";
+    const spread = (range.max - range.min) / (2 * center);
+    const percent = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 1 });
+    return config.textes.result.rangeExplanation
+      .replace("{spread}", `±${percent.format(spread)}`)
+      .replace("{center}", money(center, result.currency))
+      .replace("{limit}", `±${percent.format(config.tarifs.billedEstimateRangeLimit.rate)}`);
+  }
+
   function predictionNotes(config, answers = {}) {
     const notes = config.textes.prediction;
     const rate = config.tarifs.predictionReferenceAnalyses.samplingRate;
@@ -344,6 +379,8 @@
   }
 
   NIRSApp.predictionNotes = predictionNotes;
+  NIRSApp.preparePredictionAnswers = preparePredictionAnswers;
+  NIRSApp.billingRangeExplanation = billingRangeExplanation;
   NIRSApp.restoreAcquisitionDetails = restoreAcquisitionDetails;
   NIRSApp.money = money;
   NIRSApp.rangeMoney = rangeMoney;

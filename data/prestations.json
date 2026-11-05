@@ -507,8 +507,8 @@
           "required": true,
           "default": "without_reference",
           "options": [
-            { "value": "without_reference", "label": "Prédiction sans analyses de référence" },
-            { "value": "with_reference", "label": "Prédiction avec analyses de référence" }
+            { "value": "without_reference", "label": "Prédictions sans vérification biochimique" },
+            { "value": "with_reference", "label": "Prédictions avec vérification biochimique" }
           ],
           "section": "instrument_mode"
         },
@@ -548,40 +548,42 @@
           "section": "volume"
         },
         {
+          "id": "replicates",
+          "step": 2,
+          "type": "number",
+          "label": "Nombre de répétitions spectrales par échantillon",
+          "required": true,
+          "min": 1,
+          "max": 100,
+          "stepValue": 1,
+          "integer": true,
+          "default": 2,
+          "section": "volume"
+        },
+        {
           "id": "samples",
           "step": 2,
           "type": "number",
-          "label": "Nombre d’échantillons indépendants à prédire",
-          "required": true,
+          "label": "Nombre estimé d’échantillons indépendants à prédire",
+          "readonly": true,
           "min": 1,
-          "max": 100000,
-          "stepValue": 1,
           "integer": true,
-          "visibleWhen": { "field": "predictionMode", "equals": "with_reference" },
           "section": "volume",
-          "help": "Les analyses de chimie humide portent sur les échantillons indépendants, sans compter plusieurs fois les répétitions spectrales."
+          "help": "Nombre de spectres divisé par le nombre de répétitions par échantillon, arrondi à l’entier supérieur si nécessaire."
         },
         {
           "id": "referenceProperties",
           "step": 2,
           "type": "checkboxList",
-          "label": "Propriétés à vérifier par chimie humide",
+          "label": "Traits à vérifier par biochimie",
           "required": true,
+          "maxSelectionsField": "models",
           "options": [
             { "value": "starch", "label": "Amidon" },
             { "value": "protein", "label": "Protéines" },
             { "value": "other", "label": "Autre propriété, sur devis" }
           ],
           "visibleWhen": { "field": "predictionMode", "equals": "with_reference" },
-          "section": "available_data",
-          "help": "Les analyses sont facturées par échantillon et par propriété sélectionnée. Précisez les autres propriétés dans le commentaire."
-        },
-        {
-          "id": "spectraAlreadyAcquired",
-          "step": 2,
-          "type": "checkbox",
-          "label": "Spectres déjà acquis",
-          "default": true,
           "section": "available_data"
         },
         {
@@ -598,7 +600,6 @@
           "type": "textarea",
           "label": "Informations utiles pour préparer la discussion",
           "required": true,
-          "minLength": 20,
           "section": "options",
           "help": "Précisez le modèle à utiliser, les propriétés attendues, l'origine des spectres, le format des données, les contrôles souhaités et le format de restitution attendu."
         }
@@ -851,7 +852,6 @@
           "label": "Informations utiles pour préparer la discussion",
           "required": true,
           "section": "available_data",
-          "minLength": 20,
           "help": "Décrivez l'objectif, les données disponibles, les instruments, le nombre de spectres et de propriétés, les valeurs de référence, les contraintes et les livrables attendus."
         },
         {
@@ -1048,23 +1048,10 @@
       "requestType": "existing_model_predictions",
       "presetAnswers": { "predictionMode": "without_reference" },
       "preferCardText": true,
-      "label": "Prédire sans analyses de référence",
-      "description": "Utiliser un modèle existant avec examen de conformité des spectres, sans vérification expérimentale des valeurs prédites sur le lot.",
+      "label": "Prédire",
+      "description": "Utiliser un modèle existant pour prédire des traits sur de nouveaux spectres, avec ou sans vérification biochimique.",
       "accent": "chemometrics",
       "instrumentType": "Appliquer un modèle",
-      "iconPath": "./assets/icons/predire.png",
-      "metadataId": "predire"
-    },
-    {
-      "id": "predict_with_reference",
-      "categoryId": "chemometrics",
-      "requestType": "existing_model_predictions",
-      "presetAnswers": { "predictionMode": "with_reference" },
-      "preferCardText": true,
-      "label": "Prédire avec analyses de référence",
-      "description": "Utiliser un modèle existant et vérifier les valeurs prédites sur un sous-ensemble des échantillons par des analyses de chimie humide.",
-      "accent": "chemometrics",
-      "instrumentType": "Prédiction et vérification expérimentale",
       "iconPath": "./assets/icons/predire.png",
       "metadataId": "predire"
     },

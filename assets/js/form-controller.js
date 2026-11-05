@@ -936,12 +936,10 @@
           fieldset.append(renderField(item, field, showError ? errors[field.id] : ""));
         });
         if (item.requestType === "spectra_acquisition" && sectionId === "volume") {
-          const capacitySlot = NIRSApp.createElement("div");
-          capacitySlot.dataset.spectralCapacity = item.id;
-          const capacityBlock = renderSpectralCapacityBlock(item);
-          if (capacityBlock) capacitySlot.append(capacityBlock);
-          fieldset.append(capacitySlot);
           fieldset.append(NIRSApp.createElement("p", "muted field-wide", config.textes.acquisition.reservationReview));
+        }
+        if (item.requestType === "existing_model_predictions" && sectionId === "instrument_mode") {
+          fieldset.append(NIRSApp.createElement("p", "muted field-wide", config.textes.prediction.modelAvailability));
         }
         container.append(fieldset);
       });
@@ -1035,6 +1033,7 @@
         if (field.min !== undefined) input.min = field.min;
         if (field.max !== undefined) input.max = field.max;
         if (field.stepValue !== undefined) input.step = field.stepValue;
+        if (field.readonly) input.readOnly = true;
         input.dataset.itemId = item.id;
         input.dataset.fieldId = field.id;
         input.setAttribute("aria-describedby", error ? errorId : "");
@@ -1080,6 +1079,7 @@
         fieldset.id = id;
         fieldset.innerHTML = `<legend>${field.label}</legend>`;
         const selected = new Set(Array.isArray(item.answers[field.id]) ? item.answers[field.id] : []);
+        if (field.maxSelectionsField) fieldset.dataset.selectionLimitField = field.maxSelectionsField;
         checkboxListOptions(field).forEach((option) => {
           const label = NIRSApp.createElement("label", "checkbox");
           const input = NIRSApp.createElement("input");
@@ -1092,7 +1092,13 @@
           label.append(input, document.createTextNode(option.label));
           fieldset.append(label);
         });
+        if (field.maxSelectionsField) {
+          const count = NIRSApp.createElement("p", "muted");
+          count.dataset.selectionCount = "";
+          fieldset.append(count);
+        }
         wrapper.append(fieldset);
+        updateTraitSelectionLimit(wrapper, item);
       } else if (field.type === "radio") {
         const fieldset = NIRSApp.createElement("fieldset", "segmented");
         fieldset.innerHTML = `<legend>${field.label}</legend>`;
@@ -1140,6 +1146,11 @@
         if (item.answers.measurementDeviceNeedsReview) wrapper.append(NIRSApp.createElement("p", "notice-inline", config.textes.acquisition.obsoleteDevice));
         const deviceInfo = renderMeasurementDeviceInfo(item);
         if (deviceInfo) wrapper.append(deviceInfo);
+        const capacitySlot = NIRSApp.createElement("div");
+        capacitySlot.dataset.spectralCapacity = item.id;
+        const capacity = renderSpectralCapacityBlock(item);
+        if (capacity) capacitySlot.append(capacity);
+        wrapper.append(capacitySlot);
       }
       if (item.requestType === "validated_calibration" && field.id === "samples" && item.answers.samplesSource === "derived") wrapper.append(NIRSApp.createElement("p", "muted", "Valeur préremplie à partir des prises de spectres sélectionnées."));
       if (item.requestType === "validated_calibration" && field.id === "replicates" && item.answers.replicatesWarning) wrapper.append(NIRSApp.createElement("p", "error", item.answers.replicatesWarning));
@@ -1147,6 +1158,17 @@
         wrapper.append(NIRSApp.createElement("p", "notice-inline", "Vous indiquez que les données sont directement exploitables. Si la jointure automatique entre les spectres et les valeurs de référence n'est pas possible, la réalisation des analyses pourra être retardée et un travail complémentaire pourra être proposé."));
       }
       return wrapper;
+    }
+
+    function updateTraitSelectionLimit(scope, item) {
+      scope.querySelectorAll("[data-selection-limit-field]").forEach((group) => {
+        const max = Number(item.answers[group.dataset.selectionLimitField]);
+        const inputs = [...group.querySelectorAll('input[type="checkbox"]')];
+        const selected = inputs.filter((input) => input.checked).length;
+        const validMax = Number.isInteger(max) && max > 0;
+        inputs.forEach((input) => { input.disabled = !input.checked && (!validMax || selected >= max); });
+        group.querySelector("[data-selection-count]").textContent = `Traits sélectionnés : ${selected} / ${validMax ? max : "à compléter"}`;
+      });
     }
 
     function checkboxListOptions(field) {
@@ -1590,6 +1612,7 @@
         <div>
           <span>${isPartnership ? "Part facturée indicative HT à définir" : totalLabel}</span>
           <strong>${!result.context ? "À compléter" : billedEstimate}</strong>
+          <small data-range-explanation>${escapeHtml(NIRSApp.billingRangeExplanation(config, result))}</small>
           <small>${result.billingRangeReview?.required ? escapeHtml(result.billingRangeReview.message) : (isPartnership ? `À valider avec le plateau.${administrativeFeeNote ? ` ${administrativeFeeNote}.` : ""}` : `${contextDetail || contextHelp}`)}${incomplete ? ` - ${incomplete} prestation(s) à compléter` : ""}${quoteLines ? ` - ${quoteLines} élément(s) sur devis non inclus` : ""}</small>
         </div>
         ${isPartnership ? `
@@ -1612,7 +1635,7 @@
       scope.querySelectorAll("input, select, textarea").forEach((control) => {
         const itemId = control.dataset.itemId;
         const fieldId = control.dataset.fieldId;
-        if (!itemId || !fieldId) return;
+        if (!itemId || !fieldId || control.readOnly) return;
         control.addEventListener("blur", () => {
           touchedFields.add(`${itemId}.${fieldId}`);
           const item = state.items.find((entry) => entry.id === itemId);
@@ -1740,11 +1763,17 @@
     }
 
     function renderNavigation() {
+      const controls = NIRSApp.createElement("div", "wizard-controls");
+      const requirements = NIRSApp.createElement("section", "navigation-requirements");
+      requirements.dataset.navigationRequirements = "";
+      requirements.id = "navigation-requirements";
+      requirements.setAttribute("aria-live", "polite");
+      refreshNavigationRequirements(requirements);
       const nav = NIRSApp.createElement("div", "wizard-nav");
       nav.innerHTML = `
         <button type="button" class="button-secondary" ${step === 1 ? "disabled" : ""} data-prev>Retour</button>
         <button type="button" class="button-ghost" data-clear-draft>Effacer le brouillon enregistré</button>
-        ${step < 4 ? `<button type="button" class="button-primary" data-next ${canContinueFromStep(step, state, itemStatus, config) ? "" : "disabled"}>Continuer</button>` : ""}
+        ${step < 4 ? `<button type="button" class="button-primary" data-next aria-describedby="navigation-requirements" ${canContinueFromStep(step, state, itemStatus, config) ? "" : "disabled"}>Continuer</button>` : ""}
       `;
       nav.querySelector("[data-prev]").addEventListener("click", () => setStep(step - 1));
       nav.querySelector("[data-next]")?.addEventListener("click", () => requestStepChange(step + 1));
@@ -1752,7 +1781,8 @@
         storage.removeItem(STORAGE_KEY);
         announce("Brouillon local effacé.");
       });
-      return nav;
+      controls.append(requirements, nav);
+      return controls;
     }
 
     function attachCartEvents(scope) {
@@ -1763,7 +1793,36 @@
     function updateNavigationState() {
       const next = document.querySelector("[data-next]");
       if (next) next.disabled = !canContinueFromStep(step, state, itemStatus, config);
+      refreshNavigationRequirements(document.querySelector("[data-navigation-requirements]"));
       updateProgressState();
+    }
+
+    function refreshNavigationRequirements(container) {
+      if (!container) return;
+      const messages = [];
+      if (step === 1) messages.push(...Object.values(requestErrors(state)));
+      if ((step === 2 || step === 3) && !state.items.length) messages.push("Ajoutez au moins une prestation.");
+      if (step === 3) {
+        state.items.forEach((item, index) => {
+          const errors = NIRSApp.validateItem(config.prestations, item.requestType, answersForItem(item));
+          if (!Object.keys(errors).length) {
+            const subtotal = calculateItemSubtotal(item);
+            if (subtotal.status === "incomplete") Object.assign(errors, subtotal.errors || { _global: "Vérifiez la configuration de cette prestation." });
+          }
+          const request = config.prestations.requestTypes[item.requestType];
+          const label = request?.label || "Prestation";
+          messages.push(...Object.entries(errors).map(([fieldId, message]) => {
+            const fieldLabel = request?.fields.find((field) => field.id === fieldId)?.label;
+            return `Prestation ${index + 1} : ${label}${fieldLabel ? `, ${fieldLabel}` : ""} : ${message}`;
+          }));
+        });
+        messages.push(...Object.values(NIRSApp.validateGlobalSpectraUsers(state, config).errors));
+      }
+      container.hidden = messages.length === 0;
+      const content = messages.length
+        ? `<h3>À compléter pour continuer</h3><ul>${[...new Set(messages)].map((message) => `<li>${escapeHtml(message)}</li>`).join("")}</ul>`
+        : "";
+      if (container.innerHTML !== content) container.innerHTML = content;
     }
 
     function updateProgressState() {
@@ -1826,6 +1885,11 @@
       if (!body) return;
       const subtotal = body.querySelector(".item-subtotal");
       if (subtotal) subtotal.replaceWith(renderSubtotal(calculateItemSubtotal(item)));
+      if (item.requestType === "existing_model_predictions") {
+        const samples = body.querySelector('input[name="samples"]');
+        if (samples) samples.value = item.answers.samples ?? "";
+        updateTraitSelectionLimit(body, item);
+      }
       const capacitySlot = body.querySelector("[data-spectral-capacity]");
       if (capacitySlot) {
         const capacity = renderSpectralCapacityBlock(item);
@@ -1847,6 +1911,7 @@
       const errors = NIRSApp.validateItem(config.prestations, item.requestType, answersForItem(item));
       if (Object.keys(errors).length) return "À compléter";
       const subtotal = calculateItemSubtotal(item);
+      if (subtotal.status === "incomplete") return "À compléter";
       if (subtotal.status === "partial") return "Sur devis partiel";
       if (subtotal.status === "quote_required") return "Sur devis";
       return "Complète";
@@ -1887,7 +1952,7 @@
       },
       requester: defaultRequester(),
       project: defaultProject(),
-      schemaVersion: 8,
+      schemaVersion: 9,
       context: "",
       urgent: false,
       urgentSource: "none",
@@ -2006,6 +2071,10 @@
       delete item.answers.participants;
       syncDerivedPeopleCount(item);
     }
+    if (item.requestType === "existing_model_predictions") {
+      const fields = globalThis.NIRS_CONFIG.prestations.requestTypes.existing_model_predictions.fields;
+      item.answers = NIRSApp.preparePredictionAnswers(item.answers, fields.find((field) => field.id === "replicates").default);
+    }
   }
 
   function syncDerivedPeopleCount(item) {
@@ -2023,7 +2092,7 @@
       context: state.context,
       urgent: state.urgent,
       urgentSource: state.urgentSource || "none",
-      schemaVersion: 8,
+      schemaVersion: 9,
       currentStep,
       tariffVersion: config.tarifs.metadata.version || state.tariffVersion || "",
       savedAt: new Date().toISOString(),
@@ -2059,7 +2128,7 @@
       project: { ...project, ...(parsed.project || {}) },
       context: migrateContext(parsed.context, parsed.schemaVersion),
       urgentSource: parsed.urgentSource || (parsed.urgent ? "manual" : "none"),
-      schemaVersion: 8
+      schemaVersion: 9
     };
     delete normalized.externalAdmin;
     normalized.currentStep = Number.isInteger(parsed.currentStep) ? Math.min(4, Math.max(1, parsed.currentStep)) : 1;
@@ -2116,7 +2185,8 @@
       }
     }
     if (requestType === "existing_model_predictions") {
-      if (next.predictionMode === undefined) next.predictionMode = "without_reference";
+      const fields = globalThis.NIRS_CONFIG.prestations.requestTypes.existing_model_predictions.fields;
+      Object.assign(next, NIRSApp.preparePredictionAnswers(next, fields.find((field) => field.id === "replicates").default));
       if (next.outlierCheck === true) next.dataPreparationRequired = true;
     }
     if (requestType === "model_maintenance") {

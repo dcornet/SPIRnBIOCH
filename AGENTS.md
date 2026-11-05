@@ -38,7 +38,7 @@
 
 ## Notes refonte 0.3.14
 
-- Le schema de brouillon courant est `schemaVersion: 8`.
+- Le schéma de brouillon courant est `schemaVersion: 9`.
 - Les contextes publics sont `internal_agap`, `public_research_lab`, `partnership` et `subcontracting`.
 - `public_research_lab` applique le coefficient academique configure dans `data/tarifs.json` et le forfait de gestion de 150 EUR.
 - Les modes publics de prise de spectres sont `autonomous_supported` et `plateau_operated`; les anciens `self_service` et `assisted` restent uniquement des alias de migration.
@@ -55,12 +55,16 @@
 - La prédiction avec modèle existant utilise la fourchette standard de +/-15 %.
 - En phase interne, `internalExports.autoGenerateWithPdf=true` impose la génération du XLSX plateau avec le PDF. Prévoir sa désactivation/séparation avant ouverture publique.
 
-## Prédiction Avec Analyses de Référence
+## Prédiction Avec Vérification Biochimique
 
 - Conserver `existing_model_predictions` et le champ `predictionMode` (`without_reference` / `with_reference`). Les anciens brouillons restent en mode sans référence par défaut.
+- Le catalogue expose une seule carte « Prédire ». Le mode avec ou sans vérification biochimique est choisi dans la configuration.
+- Dans les deux modes, `samples` est calculé en lecture seule : `ceil(spectra / replicates)`. Les répétitions sont obligatoires. Les anciennes quantités explicites permettent d'inférer les répétitions si le rapport est entier ; sinon utiliser la valeur par défaut configurée et conserver l'ancienne saisie dans `legacyPredictionAnswers`.
+- Le nombre de traits biochimiques sélectionnés ne peut pas dépasser `models`. Si ce dernier diminue, conserver les choix mais bloquer la progression jusqu'à correction explicite.
+- `spectraAlreadyAcquired` reste uniquement une donnée historique et ne doit plus ajouter d'acquisition implicite sur devis.
 - Les quantités et prix de chimie humide viennent uniquement de `predictionReferenceAnalyses` dans `data/tarifs.json`.
 - Calculer les quantités sur les échantillons indépendants à prédire et les arrondir au supérieur, jamais sur le nombre de spectres ou de répétitions. Le taux actif est fixé à 10 % (`samplingRate.min=max=0.1`), plafonné à 100 échantillons vérifiés par prestation, pour chaque propriété.
-- Présenter la discussion du programme en amont et sa réévaluation après diagnostic des nouveaux spectres (X) et des valeurs de référence disponibles (Y) par rapport aux données de calibration. Toute adaptation du nombre d’analyses et de son coût doit être validée avant les analyses complémentaires.
+- Présenter simplement la discussion du programme en amont et sa réévaluation après diagnostic, sans détailler les comparaisons X/Y ni mentionner une suspension de restitution. Toute adaptation du nombre d’analyses et de son coût doit être validée avant les analyses complémentaires.
 - Les lignes `predictionReferenceAnalyses` ne reçoivent ni urgence, ni coefficient de contexte, ni marge d’incertitude supplémentaire. Elles restent facturées en partenariat.
 - Préserver `quantityMax` et `referenceAnalysis` dans les exports. Ne pas remplacer une fourchette de quantités par une hausse fictive du prix unitaire.
 - `billedEstimateRangeLimit` plafonne la fourchette globale à ±15 % après arrondi. Au-delà, le total client reste sur devis et le montant facturable exporté est `null`, jamais zéro. Les coûts calculés restent dans l’audit plateau, sans écrêtage.

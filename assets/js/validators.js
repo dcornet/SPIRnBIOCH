@@ -39,7 +39,7 @@
 
   function validateItem(prestations, requestType, answers) {
     const errors = {};
-    const normalizedAnswers = migrateLegacyAnswers(requestType, answers || {});
+    const normalizedAnswers = migrateLegacyAnswers(requestType, answers || {}, prestations);
     for (const field of allVisibleFields(prestations, requestType, normalizedAnswers)) {
       const value = normalizedAnswers[field.id];
       const required = isRequired(field, normalizedAnswers);
@@ -93,9 +93,8 @@
     if (requestType === "existing_model_predictions") {
       if (!["without_reference", "with_reference"].includes(normalizedAnswers.predictionMode)) errors.predictionMode = "Choisissez un mode de vérification.";
       if (normalizedAnswers.predictionMode === "with_reference") {
-        if (Number(normalizedAnswers.samples) > Number(normalizedAnswers.spectra)) errors.samples = "Le nombre d’échantillons indépendants ne peut pas dépasser le nombre de spectres.";
         const properties = Array.isArray(normalizedAnswers.referenceProperties) ? normalizedAnswers.referenceProperties : [];
-        if (new Set(properties).size > Number(normalizedAnswers.models)) errors.referenceProperties = "Le nombre de propriétés à vérifier ne peut pas dépasser le nombre de propriétés ou modèles à prédire.";
+        if (Number(normalizedAnswers.models) > 0 && new Set(properties).size > Number(normalizedAnswers.models)) errors.referenceProperties = "Le nombre de traits à vérifier ne peut pas dépasser le nombre de traits ou modèles à prédire. Retirez les sélections en trop.";
       }
     }
     if (requestType === "model_maintenance") {
@@ -273,7 +272,7 @@
   }
 
   function pruneHiddenAnswers(prestations, requestType, answers) {
-    const migrated = migrateLegacyAnswers(requestType, answers || {});
+    const migrated = migrateLegacyAnswers(requestType, answers || {}, prestations);
     const next = { requestType };
     for (const field of allVisibleFields(prestations, requestType, migrated)) {
       if (Object.prototype.hasOwnProperty.call(migrated, field.id)) next[field.id] = migrated[field.id];
@@ -308,12 +307,16 @@
       next.legacyMaintenanceAnswers = migrated.legacyMaintenanceAnswers || legacyMaintenanceAnswers(migrated);
       next.maintenanceComment = migrated.maintenanceComment || "";
     }
+    if (requestType === "existing_model_predictions" && migrated.legacyPredictionAnswers) next.legacyPredictionAnswers = migrated.legacyPredictionAnswers;
     return next;
   }
 
-  function migrateLegacyAnswers(requestType, answers) {
+  function migrateLegacyAnswers(requestType, answers, prestations) {
     const next = requestType === "spectra_acquisition"
-      ? NIRSApp.restoreAcquisitionDetails(answers || {}) : { ...(answers || {}) };
+      ? NIRSApp.restoreAcquisitionDetails(answers || {})
+      : requestType === "existing_model_predictions"
+        ? NIRSApp.preparePredictionAnswers(answers, requestFields(prestations, requestType).find((field) => field.id === "replicates")?.default)
+        : { ...(answers || {}) };
     if (requestType === "spectra_acquisition") {
       if ((next.samples !== undefined || next.replicates !== undefined) && !next.legacySpectraDetails) {
         next.legacySpectraDetails = {
@@ -472,7 +475,7 @@
 
   function describeAnswers(config, requestType, answers) {
     const labels = [];
-    const migrated = migrateLegacyAnswers(requestType, answers || {});
+    const migrated = migrateLegacyAnswers(requestType, answers || {}, config.prestations);
     if (requestType === "model_maintenance") {
       const maintenanceType = migrated.maintenanceType;
       const typeField = requestFields(config.prestations, requestType).find((entry) => entry.id === "maintenanceType");
@@ -517,8 +520,9 @@
       const modeField = requestFields(config.prestations, requestType).find((field) => field.id === "predictionMode");
       const mode = modeField?.options.find((option) => option.value === migrated.predictionMode);
       if (mode) labels.push(mode.label);
+      labels.push(`${migrated.replicates || "à compléter"} répétition(s) par échantillon`);
+      labels.push(`${migrated.samples || "à compléter"} échantillon(s) indépendant(s)`);
       if (migrated.predictionMode === "with_reference") {
-        labels.push(`${migrated.samples || "à compléter"} échantillon(s) indépendant(s)`);
         const properties = requestFields(config.prestations, requestType).find((field) => field.id === "referenceProperties");
         (Array.isArray(migrated.referenceProperties) ? migrated.referenceProperties : []).forEach((value) => {
           const property = properties.options.find((option) => option.value === value);

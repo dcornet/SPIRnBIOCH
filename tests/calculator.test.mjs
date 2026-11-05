@@ -111,7 +111,6 @@ test("catalogue avec une carte par spectrometre et formations non ajoutables", (
   assert.deepEqual(cards.filter((card) => card.categoryId === "chemometrics" && !card.disabled).map((card) => card.requestType), [
     "validated_calibration",
     "existing_model_predictions",
-    "existing_model_predictions",
     "model_maintenance",
     "other_chemometrics"
   ]);
@@ -123,8 +122,8 @@ test("catalogue formule les prestations et référence les icônes locales", () 
   assert.equal(cardsById.training_instrument.label, "Formation à un instrument");
   assert.equal(cardsById.training_theoretical_nirs.label, "Formation théorique NIRS");
   assert.equal(cardsById.calibrate.label, "Calibrer");
-  assert.equal(cardsById.predict.label, "Prédire sans analyses de référence");
-  assert.equal(cardsById.predict_with_reference.label, "Prédire avec analyses de référence");
+  assert.equal(cardsById.predict.label, "Prédire");
+  assert.equal(cardsById.predict_with_reference, undefined);
   assert.equal(cardsById.maintain.label, "Vérifier et adapter un modèle");
   assert.equal(cardsById.other_chemometrics.label, "Autre demande");
   for (const card of config.prestations.catalogCards) {
@@ -863,7 +862,7 @@ test("chimie humide : tarifs par contexte, quantité fixée à 10 % arrondie au 
   const amounts = { internal_agap: 10, public_research_lab: 40, partnership: 20, subcontracting: 50 };
   for (const [context, amount] of Object.entries(amounts)) {
     const prediction = item("existing_model_predictions", {
-      predictionMode: "with_reference", spectra: 303, samples: 101, models: 3, referenceProperties: ["starch", "protein", "starch"]
+      predictionMode: "with_reference", spectra: 303, replicates: 3, models: 3, referenceProperties: ["starch", "protein", "starch"]
     });
     const result = quote([prediction], { context, urgent: true });
     const starch = result.items.find((line) => line.id === "prediction_reference_starch");
@@ -892,7 +891,7 @@ test("chimie humide : tarifs par contexte, quantité fixée à 10 % arrondie au 
 test("chimie humide : nombre d’échantillons distinct des spectres et absence de double arrondi", () => {
   for (const [samples, quantities] of [[1, [1, 1]], [11, [2, 2]], [70, [7, 7]], [100, [10, 10]]]) {
     const result = quote([item("existing_model_predictions", {
-      predictionMode: "with_reference", spectra: 500, samples, referenceProperties: ["starch"]
+      predictionMode: "with_reference", spectra: samples * 3, replicates: 3, referenceProperties: ["starch"]
     })], { context: "internal_agap" });
     const line = result.items.find((line) => line.id === "prediction_reference_starch");
     assert.deepEqual([line.quantity, line.quantityMax], quantities, String(samples));
@@ -900,8 +899,8 @@ test("chimie humide : nombre d’échantillons distinct des spectres et absence 
 });
 
 test("chimie humide : validation conditionnelle, autres propriétés sur devis et anciens brouillons", () => {
-  const base = item("existing_model_predictions", { predictionMode: "with_reference", samples: 100, spectra: 100, referenceProperties: ["starch"] });
-  for (const [field, value] of [["samples", ""], ["samples", 101], ["referenceProperties", []], ["referenceProperties", ["unknown"]], ["referenceProperties", ["starch", "protein"]]]) {
+  const base = item("existing_model_predictions", { predictionMode: "with_reference", replicates: 1, spectra: 100, referenceProperties: ["starch"] });
+  for (const [field, value] of [["replicates", ""], ["replicates", 0], ["replicates", 1.5], ["referenceProperties", []], ["referenceProperties", ["unknown"]], ["referenceProperties", ["starch", "protein"]]]) {
     assert.ok(app.validateItem(config.prestations, base.requestType, { ...base.answers, [field]: value })[field]);
   }
   assert.deepEqual(app.validateItem(config.prestations, base.requestType, { ...base.answers, predictionMode: "without_reference", samples: "", referenceProperties: [] }), {});
@@ -909,17 +908,73 @@ test("chimie humide : validation conditionnelle, autres propriétés sur devis e
   delete old.predictionMode;
   const restored = app.pruneHiddenAnswers(config.prestations, base.requestType, old);
   assert.equal(restored.predictionMode, "without_reference");
-  assert.equal(restored.samples, undefined);
+  assert.equal(restored.samples, 100);
   assert.equal(restored.referenceProperties, undefined);
   const other = quote([item("existing_model_predictions", { predictionMode: "with_reference", samples: 100, referenceProperties: ["other"] })]);
   assert.equal(other.status, "partial");
   assert.equal(other.items.find((line) => line.id === "prediction_reference_other").pricingMode, "quote");
 });
 
+test("prédiction : les répétitions déterminent les échantillons dans les deux modes", () => {
+  for (const predictionMode of ["with_reference", "without_reference"]) {
+    const prediction = item("existing_model_predictions", {
+      predictionMode, spectra: 301, replicates: 3, samples: 9999, referenceProperties: ["starch"], comment: "X"
+    });
+    assert.deepEqual(app.validateItem(config.prestations, prediction.requestType, prediction.answers), {});
+    const clean = app.pruneHiddenAnswers(config.prestations, prediction.requestType, prediction.answers);
+    assert.equal(clean.samples, 101);
+    const result = quote([prediction], { context: "internal_agap" });
+    const reference = result.items.find((line) => line.referenceAnalysis);
+    assert.equal(reference?.quantity, predictionMode === "with_reference" ? 11 : undefined);
+    const description = app.describeAnswers(config, prediction.requestType, clean);
+    assert.match(description, /101 échantillon/);
+    assert.match(description, /3 répétition/);
+  }
+  const other = item("other_chemometrics", { shortTitle: "Test", description: "X" });
+  assert.deepEqual(app.validateItem(config.prestations, other.requestType, other.answers), {});
+});
+
+test("prédiction : migration des répétitions et suppression de l’acquisition implicite", () => {
+  const legacy = { spectra: 300, samples: 100, spectraAlreadyAcquired: false };
+  const prepared = app.preparePredictionAnswers(legacy, 2);
+  assert.equal(prepared.replicates, 3);
+  assert.equal(prepared.samples, 100);
+  assert.equal(prepared.spectraAlreadyAcquired, undefined);
+  assert.deepEqual(prepared.legacyPredictionAnswers, { samples: 100, spectraAlreadyAcquired: false });
+  assert.deepEqual(legacy, { spectra: 300, samples: 100, spectraAlreadyAcquired: false });
+  assert.equal(app.preparePredictionAnswers({ spectra: 301, samples: 100 }, 2).samples, 151);
+  assert.equal(app.preparePredictionAnswers({ spectra: 300, replicates: "" }, 2).samples, "");
+  const base = item("existing_model_predictions", { spectra: 300, spectraAlreadyAcquired: false });
+  const result = quote([base]);
+  assert.equal(result.status, "estimated");
+  assert.ok(result.items.every((line) => !/spectra_acquisition/.test(line.id)));
+});
+
+test("prédiction : les traits vérifiés ne dépassent pas les modèles demandés", () => {
+  for (const models of [1, 2, 3]) {
+    for (const referenceProperties of [["starch"], ["starch", "protein"], ["starch", "protein", "other"]]) {
+      const prediction = item("existing_model_predictions", { predictionMode: "with_reference", models, referenceProperties });
+      const errors = app.validateItem(config.prestations, prediction.requestType, prediction.answers);
+      assert.equal(Boolean(errors.referenceProperties), referenceProperties.length > models);
+      const result = quote([prediction]);
+      if (referenceProperties.length > models) assert.equal(result.itemResults[0].status, "incomplete");
+    }
+  }
+});
+
+test("fourchette : le cas 3 464 à 4 604 EUR correspond à ±14,1 %", () => {
+  const result = { context: "public_research_lab", status: "partial", currency: "EUR", billedEstimate: { min: 3464, max: 4604 } };
+  const message = app.billingRangeExplanation(config, result);
+  assert.match(message, /±14,1\s*%/);
+  assert.match(message, /4\s*034\s*€/);
+  assert.match(message, /±15\s*%/);
+  assert.equal(app.billingRangeExplanation(config, { ...result, status: "quote_required" }), "");
+});
+
 test("chimie humide : plafond de 100 échantillons vérifiés par propriété et par prestation", () => {
   for (const [samples, expected] of [[999, [100, 100]], [1000, [100, 100]], [1500, [100, 100]], [2000, [100, 100]], [5000, [100, 100]]]) {
     const result = quote([item("existing_model_predictions", {
-      predictionMode: "with_reference", samples, spectra: 6000, models: 2, referenceProperties: ["starch", "protein"]
+      predictionMode: "with_reference", replicates: 1, spectra: samples, models: 2, referenceProperties: ["starch", "protein"]
     })], { context: "partnership" });
     const lines = result.items.filter((line) => line.referenceAnalysis);
     assert.equal(lines.length, 2);
@@ -943,7 +998,7 @@ test("partenariat : une seule fourchette, pas de seconde réduction automatique"
 test("plafond global : aucun total présenté au-delà de ±15 %, les coûts ne sont jamais écrêtés", () => {
   for (const context of ["internal_agap", "public_research_lab", "partnership", "subcontracting"]) {
     for (const samples of [1, 11, 100, 1000, 2000, 5000]) {
-      const prediction = item("existing_model_predictions", { predictionMode: "with_reference", samples, spectra: Math.max(100, samples), models: 2, referenceProperties: ["starch", "protein"] });
+      const prediction = item("existing_model_predictions", { predictionMode: "with_reference", replicates: 1, spectra: samples, models: 2, referenceProperties: ["starch", "protein"] });
       const state = { quoteId: "range-check", context, requester: { unit: "AGAP" }, items: [prediction] };
       const result = calculateQuote(config, state);
       const exported = app.buildQuoteExport(state, result);
@@ -971,7 +1026,7 @@ test("chimie humide : données tarifaires modifiables sans repli économique sil
   const local = structuredClone(config);
   local.tarifs.predictionReferenceAnalyses.samplingRate = { min: 0.12, max: 0.18 };
   local.tarifs.predictionReferenceAnalyses.analyses.starch.contextAmounts.internal_agap = 13;
-  const state = { context: "internal_agap", items: [item("existing_model_predictions", { predictionMode: "with_reference", spectra: 100, samples: 100, referenceProperties: ["starch"] })] };
+  const state = { context: "internal_agap", items: [item("existing_model_predictions", { predictionMode: "with_reference", spectra: 100, replicates: 1, referenceProperties: ["starch"] })] };
   const result = calculateQuote(local, state);
   const line = result.items.find((line) => line.id === "prediction_reference_starch");
   assert.equal(line.billedTotalMin, 156);
@@ -984,7 +1039,7 @@ test("chimie humide : données tarifaires modifiables sans repli économique sil
 });
 
 test("chimie humide à 10 % fixe : l’estimation reste chiffrée et les prestations s’additionnent sans surcoût", () => {
-  const prediction = item("existing_model_predictions", { predictionMode: "with_reference", spectra: 1000, samples: 1000, referenceProperties: ["starch"] });
+  const prediction = item("existing_model_predictions", { predictionMode: "with_reference", spectra: 1000, replicates: 1, referenceProperties: ["starch"] });
   const single = quote([prediction], { context: "partnership" });
   assert.equal(single.status, "estimated");
   assert.equal(single.billingRangeReview.required, false);
@@ -1012,7 +1067,7 @@ test("plafond global : le garde-fou reste actif si une autre règle dépasse ±1
 });
 
 test("chimie humide : PDF, JSON et classeur plateau conservent hypothèses et détails", () => {
-  const prediction = item("existing_model_predictions", { predictionMode: "with_reference", samples: 100, referenceProperties: ["starch"] });
+  const prediction = item("existing_model_predictions", { predictionMode: "with_reference", spectra: 300, replicates: 3, referenceProperties: ["starch"] });
   const state = { quoteId: "reference-test", context: "partnership", requester: { unit: "AGAP" }, items: [prediction] };
   const result = calculateQuote(config, state);
   const exported = app.buildQuoteExport(state, result);
@@ -1027,7 +1082,7 @@ test("chimie humide : PDF, JSON et classeur plateau conservent hypothèses et d�
   const workbook = app.buildPlatformWorkbookModel(config, state, result, exported);
   assert.ok(workbook.lines.some((line) => /10 analyses pour 100/.test(line.description)));
   const notice = app.predictionNotes(config, prediction.answers)[1];
-  for (const text of ["en amont", "à l’issue du diagnostic", "nouveaux spectres (X)", "nouvelles valeurs de référence (Y)", "validée avec le demandeur"]) {
+  for (const text of ["en amont", "à l’issue du diagnostic", "validée avec le demandeur"]) {
     assert.ok(notice.includes(text), text);
   }
   assert.ok(result.warnings.includes(notice));
@@ -1036,6 +1091,7 @@ test("chimie humide : PDF, JSON et classeur plateau conservent hypothèses et d�
   assert.ok(app.buildSummary(state, result, config).includes(notice));
   assert.ok(workbook.quoteRows.some((row) => row.includes(notice)));
   assert.doesNotMatch(notice, /10\s*% à 10\s*%|5\s*%/);
+  assert.doesNotMatch(notice, /nouveaux spectres \(X\)|valeurs de référence \(Y\)|sans coefficient|ne garantit pas/);
   assert.doesNotMatch(ref.reason, /10 à 10 analyses/);
   assert.doesNotMatch(app.buildPlatformCsv(workbook), /\[object Object\]/);
 });
@@ -1456,7 +1512,7 @@ test("audit : le total facturé est la somme des lignes arrondies du pré-devis"
 test("audit : les champs numériques nécessaires à la prédiction ne sont pas facultatifs", () => {
   for (const predictionMode of ["without_reference", "with_reference"]) {
     const base = item("existing_model_predictions", { predictionMode, samples: 100, referenceProperties: ["starch"] });
-    for (const field of ["spectra", "models"]) {
+    for (const field of ["spectra", "models", "replicates"]) {
       assert.ok(app.validateItem(config.prestations, base.requestType, { ...base.answers, [field]: "" })[field], `${predictionMode} / ${field}`);
     }
   }

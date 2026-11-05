@@ -498,6 +498,7 @@
       project: state.project || {},
       contextLabel: contextDescription(state, quoteResult),
       status: quoteResult.status,
+      rangeExplanation: NIRSApp.billingRangeExplanation(config, quoteResult),
       quoteRequiredItemCount: quoteRequiredItems.length,
       estimatedBusinessItemCount: estimatedBusinessItemCount(quoteResult),
       serviceSummaries: (quoteResult.itemResults || []).map((item) => pdfServiceSummary(config, {
@@ -782,6 +783,10 @@
   }
 
   function drawTerms(pdf, vm, y, pageRef) {
+    if (vm.rangeExplanation) {
+      y = ensurePage(pdf, y, 12, vm, pageRef);
+      y = drawLinkedParagraph(pdf, vm.rangeExplanation, A4.margin, y, 184, { size: 8, color: MUTED, lineHeight: 1.22 }, vm, pageRef) + 4;
+    }
     y = ensurePage(pdf, y, 22, vm, pageRef);
     y += drawText(pdf, "Validité et conditions", A4.margin, y, 180, { size: 11, bold: true, color: BLUE }) + 2;
     y += drawText(pdf, `Validité du pré-devis : ${vm.validUntilLabel}`, A4.margin, y, 184, { size: 8.5, color: TEXT }) + 2;

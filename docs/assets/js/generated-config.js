@@ -4,7 +4,7 @@
 globalThis.NIRS_CONFIG = {
   "tarifs": {
     "metadata": {
-      "version": "0.3.25",
+      "version": "0.3.26",
       "validFrom": "2026-01-01",
       "currency": "EUR",
       "taxMode": "HT",
@@ -2132,11 +2132,11 @@ globalThis.NIRS_CONFIG = {
             "options": [
               {
                 "value": "without_reference",
-                "label": "Prédiction sans analyses de référence"
+                "label": "Prédictions sans vérification biochimique"
               },
               {
                 "value": "with_reference",
-                "label": "Prédiction avec analyses de référence"
+                "label": "Prédictions avec vérification biochimique"
               }
             ],
             "section": "instrument_mode"
@@ -2177,28 +2177,36 @@ globalThis.NIRS_CONFIG = {
             "section": "volume"
           },
           {
+            "id": "replicates",
+            "step": 2,
+            "type": "number",
+            "label": "Nombre de répétitions spectrales par échantillon",
+            "required": true,
+            "min": 1,
+            "max": 100,
+            "stepValue": 1,
+            "integer": true,
+            "default": 2,
+            "section": "volume"
+          },
+          {
             "id": "samples",
             "step": 2,
             "type": "number",
-            "label": "Nombre d’échantillons indépendants à prédire",
-            "required": true,
+            "label": "Nombre estimé d’échantillons indépendants à prédire",
+            "readonly": true,
             "min": 1,
-            "max": 100000,
-            "stepValue": 1,
             "integer": true,
-            "visibleWhen": {
-              "field": "predictionMode",
-              "equals": "with_reference"
-            },
             "section": "volume",
-            "help": "Les analyses de chimie humide portent sur les échantillons indépendants, sans compter plusieurs fois les répétitions spectrales."
+            "help": "Nombre de spectres divisé par le nombre de répétitions par échantillon, arrondi à l’entier supérieur si nécessaire."
           },
           {
             "id": "referenceProperties",
             "step": 2,
             "type": "checkboxList",
-            "label": "Propriétés à vérifier par chimie humide",
+            "label": "Traits à vérifier par biochimie",
             "required": true,
+            "maxSelectionsField": "models",
             "options": [
               {
                 "value": "starch",
@@ -2217,15 +2225,6 @@ globalThis.NIRS_CONFIG = {
               "field": "predictionMode",
               "equals": "with_reference"
             },
-            "section": "available_data",
-            "help": "Les analyses sont facturées par échantillon et par propriété sélectionnée. Précisez les autres propriétés dans le commentaire."
-          },
-          {
-            "id": "spectraAlreadyAcquired",
-            "step": 2,
-            "type": "checkbox",
-            "label": "Spectres déjà acquis",
-            "default": true,
             "section": "available_data"
           },
           {
@@ -2242,7 +2241,6 @@ globalThis.NIRS_CONFIG = {
             "type": "textarea",
             "label": "Informations utiles pour préparer la discussion",
             "required": true,
-            "minLength": 20,
             "section": "options",
             "help": "Précisez le modèle à utiliser, les propriétés attendues, l'origine des spectres, le format des données, les contrôles souhaités et le format de restitution attendu."
           }
@@ -2495,7 +2493,6 @@ globalThis.NIRS_CONFIG = {
             "label": "Informations utiles pour préparer la discussion",
             "required": true,
             "section": "available_data",
-            "minLength": 20,
             "help": "Décrivez l'objectif, les données disponibles, les instruments, le nombre de spectres et de propriétés, les valeurs de référence, les contraintes et les livrables attendus."
           },
           {
@@ -2694,25 +2691,10 @@ globalThis.NIRS_CONFIG = {
           "predictionMode": "without_reference"
         },
         "preferCardText": true,
-        "label": "Prédire sans analyses de référence",
-        "description": "Utiliser un modèle existant avec examen de conformité des spectres, sans vérification expérimentale des valeurs prédites sur le lot.",
+        "label": "Prédire",
+        "description": "Utiliser un modèle existant pour prédire des traits sur de nouveaux spectres, avec ou sans vérification biochimique.",
         "accent": "chemometrics",
         "instrumentType": "Appliquer un modèle",
-        "iconPath": "./assets/icons/predire.png",
-        "metadataId": "predire"
-      },
-      {
-        "id": "predict_with_reference",
-        "categoryId": "chemometrics",
-        "requestType": "existing_model_predictions",
-        "presetAnswers": {
-          "predictionMode": "with_reference"
-        },
-        "preferCardText": true,
-        "label": "Prédire avec analyses de référence",
-        "description": "Utiliser un modèle existant et vérifier les valeurs prédites sur un sous-ensemble des échantillons par des analyses de chimie humide.",
-        "accent": "chemometrics",
-        "instrumentType": "Prédiction et vérification expérimentale",
         "iconPath": "./assets/icons/predire.png",
         "metadataId": "predire"
       },
@@ -2808,7 +2790,8 @@ globalThis.NIRS_CONFIG = {
       }
     },
     "result": {
-      "nextStep": "Transmettre ces éléments au plateau pour discuter et valider le périmètre scientifique, les échantillons, les données disponibles, le délai et le devis définitif."
+      "nextStep": "Transmettre ces éléments au plateau pour discuter et valider le périmètre scientifique, les échantillons, les données disponibles, le délai et le devis définitif.",
+      "rangeExplanation": "Écart de {spread} autour du montant central de {center} HT (plafond : {limit})."
     },
     "acquisition": {
       "capacityHelp": "Les cadences sont indicatives. Elles varient selon l’expérience de l’opérateur, la présentation et la nature de la matrice, ainsi que les manipulations, le repositionnement et le nettoyage nécessaires. Par exemple, des arachides entières et une pâte d’arachide ne se mesurent pas à la même cadence.",
@@ -2817,10 +2800,11 @@ globalThis.NIRS_CONFIG = {
     },
     "prediction": {
       "title": "Fiabilité et domaine d’application des prédictions",
+      "modelAvailability": "Pour connaître les modèles prédictifs et les traits disponibles, rapprochez-vous du plateau Bioch&SPIR.",
       "conformity": "Le plateau examine la conformité des spectres et les éventuels changements de domaine par rapport aux données de calibration pour apprécier le niveau de confiance attendu. Ce diagnostic ne remplace pas une validation par des analyses de référence.",
-      "withoutReference": "Sans analyses de référence sur le lot, la justesse des valeurs prédites n’est pas vérifiée expérimentalement. Les résultats doivent être interprétés au regard du domaine de validité du modèle et de l’usage envisagé.",
-      "withReference": "Le pré-devis prévoit des analyses de chimie humide sur {samplingRange} des échantillons indépendants à prédire, arrondis à l’entier supérieur et plafonnés à {maxSamples} échantillons par prestation, pour chaque propriété sélectionnée. Le programme d’analyses sera discuté en amont avec le plateau et pourra être revu à l’issue du diagnostic, selon les spécificités des nouveaux spectres (X) par rapport à ceux de la calibration et, lorsque des mesures de référence seront disponibles, des nouvelles valeurs de référence (Y) par rapport à celles de la calibration : plages de valeurs, distributions et méthodes de mesure. Toute adaptation du nombre d’analyses et de son coût sera discutée et validée avec le demandeur avant la réalisation d’analyses complémentaires. Les analyses sont ajoutées au pré-devis sans coefficient de contexte ni majoration d’urgence. Cette vérification partielle ne garantit pas à elle seule la validité de toutes les prédictions ni la mise à jour du modèle.",
-      "releasePolicy": "En cas d’écart important avec le domaine de calibration, le plateau peut suspendre la restitution des prédictions jugées non fiables après revue scientifique. Il en informe le demandeur, documente les limites constatées et discute des analyses de référence ou adaptations nécessaires avant toute restitution."
+      "withoutReference": "Sans vérification biochimique sur le lot, la justesse des valeurs prédites n’est pas vérifiée expérimentalement. Les résultats doivent être interprétés au regard du domaine de validité du modèle et de l’usage envisagé.",
+      "withReference": "Le pré-devis prévoit une vérification biochimique sur {samplingRange} des échantillons indépendants à prédire, arrondis à l’entier supérieur et plafonnés à {maxSamples} échantillons par prestation, pour chaque trait sélectionné. Le programme d’analyses sera discuté en amont avec le plateau et pourra être revu à l’issue du diagnostic. Toute adaptation du nombre d’analyses et de son coût sera discutée et validée avec le demandeur avant la réalisation d’analyses complémentaires.",
+      "releasePolicy": "En cas d’écart important avec le domaine de calibration, le plateau en informe le demandeur, documente les limites constatées et discute des analyses biochimiques ou adaptations nécessaires avant toute restitution."
     },
     "provider": {
       "name": "Plateau Bioch&Spir",

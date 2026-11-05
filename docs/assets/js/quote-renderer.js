@@ -157,7 +157,7 @@
       : result.technicalValue;
     const { biochSpirInvolvement: _biochSpirInvolvement, ...project } = state.project || {};
     return {
-      schemaVersion: state.schemaVersion || 6,
+      schemaVersion: state.schemaVersion || 9,
       quoteId: state.quoteId || "",
       document: state.document || {},
       requester: state.requester || {},
@@ -276,6 +276,7 @@
           <div class="quote-total">
             <span>${partnership ? "Part facturée indicative HT à définir" : totalLabel}</span>
             <strong>${totalAmountText(result)}</strong>
+            <small data-range-explanation>${escapeHtml(NIRSApp.billingRangeExplanation(config, result))}</small>
             <small>${pricedCount} prestation(s) chiffrée(s)${quoteLines.length ? ` ; ${quoteLines.length} élément(s) à discuter avec le plateau non inclus` : ""}</small>
             ${partnership ? "<small>La répartition définitive sera arrêtée avec le plateau.</small>" : ""}
           </div>
